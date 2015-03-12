@@ -1,5 +1,7 @@
 package blast
 
+import "fmt"
+
 const (
 	tokenTypeOp    = 3
 	tokenTypeChar  = 2
@@ -37,19 +39,25 @@ type token struct {
 	t    int
 }
 
-func newToken(data interface{}, t int) {
+func (t *token) string() string {
+	return fmt.Sprintf("%v", data)
+}
+
+func newToken(data interface{}, t int) *token {
 	tok := new(token)
 	tok.data = data
 	tok.t = t
-	return t
+	return tok
 }
 
-func getTokens(code string) []*Tokens {
-	tokens := make([]*token, len(code))
+func parseTokens(code string) []*token {
+	tokens := make([]*token, 0)
 
-	for i, r := range code {
-		tokens = append(tokens, parseToken(strToken))
+	for _, r := range code {
+		tokens = append(tokens, parseToken(string(r)))
 	}
+
+	return tokens
 }
 
 func parseToken(strToken string) *token {
