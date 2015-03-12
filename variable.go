@@ -38,6 +38,20 @@ func NewVariable(name string, value interface{}) *Variable {
 	variable := new(Variable)
 	variable.name = name
 	variable.v = NewValue(value)
+
+	switch variable.v.data.(type) {
+	case bool:
+		variable.t = 0
+	case int64:
+		variable.t = 1
+	case string:
+		variable.t = 2
+	case float64:
+		variable.t = 3
+	default:
+		variable.t = 0
+	}
+
 	return variable
 }
 

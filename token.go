@@ -22,6 +22,7 @@ const (
 	OpTypeSubtraction    = 1
 	OpTypeMultiplication = 2
 	OpTypeDivision       = 3
+	OpTypeAssignment     = 5
 )
 
 type Token struct {
@@ -112,22 +113,20 @@ func NewToken(strTok string) *Token {
 func NewTokenFromVariable(v *Variable) *Token {
 	switch v.t {
 	case VarTypeInteger:
-		if d, err := v.v.Integer(); err != nil {
+		if d, err := v.v.Integer(); err == nil {
 			return &Token{d, TokenTypeInteger}
 		}
 	case VarTypeFloat:
-		if d, err := v.v.Float(); err != nil {
+		if d, err := v.v.Float(); err == nil {
 			return &Token{d, TokenTypeFloat}
 		}
 	case VarTypeString:
 		return &Token{v.v.String(), TokenTypeString}
 	}
-
 	return new(Token)
 }
 
-// SetVariableNameToValue
-func (t *Token) SetVariableNameToValue(b *Blast) {
+func SetVariableNameToValue(t *Token, b *Blast) *Token {
 	v, err := b.vMap.Get(t.Str())
 
 	if err == ErrVarNotFound {
@@ -135,7 +134,7 @@ func (t *Token) SetVariableNameToValue(b *Blast) {
 		os.Exit(1)
 	}
 
-	t = NewTokenFromVariable(v)
+	return NewTokenFromVariable(v)
 }
 
 // HandleToken performs an operation defined by oT on
@@ -144,11 +143,11 @@ func HandleTokens(t1 *Token, t2 *Token, oT *Token, b *Blast) *Token {
 	// Set the variable Tokens' data to the
 	// value of the variable they represent
 	if t1.t == TokenTypeVariable {
-		t1.SetVariableNameToValue(b)
+		t1 = SetVariableNameToValue(t1, b)
 	}
 
 	if t2.t == TokenTypeVariable {
-		t2.SetVariableNameToValue(b)
+		t1 = SetVariableNameToValue(t2, b)
 	}
 
 	// Handle string operations

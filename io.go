@@ -19,6 +19,6 @@ func CLI(args []string) {
 			os.Exit(1)
 		}
 
-		fmt.Println(b.ParseGeneric(input[:len(input)-1]))
+		fmt.Println(b.ParseLine(input[:len(input)-1]))
 	}
 }

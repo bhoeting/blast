@@ -1,5 +1,7 @@
 package blast
 
+import "strings"
+
 // Blast stores the main
 // components of a
 // blast program
@@ -26,12 +28,28 @@ func (b *Blast) ProcessVariable(v *Variable) {
 
 // ParseLine will parse any line of blast code
 func (b *Blast) ParseLine(code string) string {
-	return b.ParseGeneric(code)
+	b.HandleVariable(code)
+	return b.ParseGeneric(code).String()
+}
+
+// HandleVariable parses declaration
+// and initaliziationtatements
+func (b *Blast) HandleVariable(code string) {
+	assignmentOpIndex := strings.Index(code, AssignmentOp)
+
+	if assignmentOpIndex == -1 {
+		return
+	}
+
+	vName := code[:assignmentOpIndex-1]
+	vValue := b.ParseGeneric(code[assignmentOpIndex+2:]).data
+
+	b.ProcessVariable(NewVariable(vName, vValue))
 }
 
 // ParseGeneric parses an expression and
 // returns its value as a string
-func (b *Blast) ParseGeneric(code string) string {
+func (b *Blast) ParseGeneric(code string) *Token {
 	tokens := NewTokenArray(code)
 	positions := getOperatorPositions(tokens)
 	lenTokens := len(tokens)
@@ -62,7 +80,7 @@ func (b *Blast) ParseGeneric(code string) string {
 		}
 	}
 
-	return tokens[0].String()
+	return tokens[0]
 }
 
 // getOperatorPositions returns an array of
