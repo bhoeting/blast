@@ -19,15 +19,6 @@ const (
 	tokenTypeVar     = 9
 )
 
-type opType int
-
-const (
-	opTypeAddition opType = iota
-	opTypeSubtraction
-	opTypeMultiplication
-	opTypeDivision
-)
-
 const (
 	quoteIdentifier          = "\""
 	additionIdentifier       = "+"
@@ -39,11 +30,6 @@ const (
 	openParenIdentifier      = "("
 	closeParenIdentifier     = ")"
 	decimalPointIdentifier   = "."
-)
-
-const (
-	parenTypeOpen  = 1
-	parenTypeClose = 2
 )
 
 type token struct {
@@ -76,22 +62,37 @@ func (ts *tokenStream) next() (*token, bool) {
 	return tok, true
 }
 
+func (ts *tokenStream) string() string {
+	str := ""
+
+	ts.each(func(t *token, i int) {
+		str += t.string()
+	})
+
+	return str
+}
+
 func (ts *tokenStream) combine() *tokenStream {
-	replacementTokens := make([]*token, 0)
-	tokensToBeCombined := make([]*token, 0)
+	var replacementTokens, tokensToBeCombined []*token
 	prevTokensEndIndex := 0
 
 	ts.each(func(token *token, index int) {
-		if token.t != tokenTypeOp || token.t != tokenTypeSpace {
+		if token.t == tokenTypeChar || token.t == tokenTypeQuote {
 			tokensToBeCombined = append(tokensToBeCombined, token)
 		}
 
-		if token.t == tokenTypeOp || index == ts.size-1 {
+		if (token.t == tokenTypeOp || index == ts.size-1 ||
+			(token.t == tokenTypeParen && token.data == parenTypeClose)) &&
+			len(tokensToBeCombined) != prevTokensEndIndex {
+
 			replacementTokens = append(replacementTokens,
 				combineTokens(tokensToBeCombined[prevTokensEndIndex:]))
 
 			prevTokensEndIndex = len(tokensToBeCombined)
-			return
+		}
+
+		if token.t == tokenTypeOp || token.t == tokenTypeParen {
+			replacementTokens = append(replacementTokens, token)
 		}
 	})
 
@@ -133,10 +134,10 @@ func combineTokens(tokens []*token) *token {
 		if isDecimal {
 			f, _ := strconv.ParseFloat(strCombinedTok, 64)
 			return newToken(f, tokenTypeFloat)
-		} else {
-			i, _ := strconv.Atoi(strCombinedTok)
-			return newToken(i, tokenTypeInt)
 		}
+
+		i, _ := strconv.Atoi(strCombinedTok)
+		return newToken(i, tokenTypeInt)
 	}
 
 	return newToken(strCombinedTok, tokenTypeVar)
@@ -148,14 +149,12 @@ func (ts *tokenStream) each(f func(tok *token, index int)) {
 	for next, ok := ts.next(); ok == true; next, ok = ts.next() {
 		f(next, ts.index-1)
 	}
+
+	ts.index = 0
 }
 
 func (ts *tokenStream) curr() *token {
 	return ts.tokens[ts.index]
-}
-
-func (t *token) string() string {
-	return fmt.Sprintf("%v", t.data)
 }
 
 func newToken(data interface{}, t int) *token {
@@ -166,7 +165,7 @@ func newToken(data interface{}, t int) *token {
 }
 
 func parseTokens(code string) []*token {
-	tokens := make([]*token, 0)
+	var tokens []*token
 
 	for _, r := range code {
 		tokens = append(tokens, parseToken(string(r)))
@@ -212,4 +211,34 @@ func parseOperator(strToken string) opType {
 	default:
 		return -1
 	}
+}
+
+func (t *token) string() string {
+	switch t.t {
+	case tokenTypeQuote:
+		return fmt.Sprintf("%v", "\"")
+	case tokenTypeSpace:
+		return fmt.Sprintf("%v", " ")
+	case tokenTypeOp:
+		switch t.data.(opType) {
+		case opTypeAddition:
+			return fmt.Sprint("+")
+		case opTypeMultiplication:
+			return fmt.Sprint("*")
+		case opTypeDivision:
+			return fmt.Sprint("/")
+		case opTypeSubtraction:
+			return fmt.Sprint("-")
+		}
+	case tokenTypeParen:
+		if t.data.(int) == parenTypeClose {
+			return fmt.Sprint(")")
+		} else {
+			return fmt.Sprint("(")
+		}
+	default:
+		return fmt.Sprintf("%v", t.data)
+	}
+
+	return fmt.Sprintf("%v", t.data)
 }

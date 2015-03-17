@@ -1,6 +1,10 @@
 package blast
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 // testTokenStream tests that the correct
 // token type is created for each token
@@ -29,21 +33,15 @@ func TestTokenStream(t *testing.T) {
 }
 
 func TestCombiningOfTokens(t *testing.T) {
-	ts := newTokenStream("23+\"string\"+300.2").combine()
+	ts := newTokenStream("(23+\"string\")+300.2").combine()
 
-	firstToken := ts.tokens[0].data.(int)
-	secondToken := ts.tokens[1].data.(string)
-	thirdToken := ts.tokens[2].data.(float64)
+	t.Log(ts.string())
 
-	if firstToken != 23 {
-		t.Fatalf("Could not combine tokens, wanted %v got %v", 21, firstToken)
-	}
-
-	if secondToken != "string" {
-		t.Fatalf("Could not combine tokens, wanted %v got %v", "string", secondToken)
-	}
-
-	if thirdToken != 300.2 {
-		t.Fatalf("Could not combine tokens, wanted %v got %v", 300.2, thirdToken)
-	}
+	assert.Equal(t, tokenTypeParen, ts.tokens[0].t)
+	assert.Equal(t, tokenTypeInt, ts.tokens[1].t)
+	assert.Equal(t, tokenTypeOp, ts.tokens[2].t)
+	assert.Equal(t, tokenTypeString, ts.tokens[3].t)
+	assert.Equal(t, tokenTypeParen, ts.tokens[4].t)
+	assert.Equal(t, tokenTypeOp, ts.tokens[5].t)
+	assert.Equal(t, tokenTypeFloat, ts.tokens[6].t)
 }
