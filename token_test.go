@@ -33,9 +33,7 @@ func TestTokenStream(t *testing.T) {
 }
 
 func TestCombiningOfTokens(t *testing.T) {
-	ts := newTokenStream("(23+\"string\")+300.2").combine()
-
-	t.Log(ts.string())
+	ts := newTokenStream("(23+\"string\") + 300.2 + \"derp\"").combine()
 
 	assert.Equal(t, tokenTypeParen, ts.tokens[0].t)
 	assert.Equal(t, tokenTypeInt, ts.tokens[1].t)
@@ -44,4 +42,6 @@ func TestCombiningOfTokens(t *testing.T) {
 	assert.Equal(t, tokenTypeParen, ts.tokens[4].t)
 	assert.Equal(t, tokenTypeOp, ts.tokens[5].t)
 	assert.Equal(t, tokenTypeFloat, ts.tokens[6].t)
+	assert.Equal(t, tokenTypeOp, ts.tokens[7].t)
+	assert.Equal(t, tokenTypeString, ts.tokens[8].t)
 }

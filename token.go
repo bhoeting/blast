@@ -65,9 +65,9 @@ func (ts *tokenStream) next() (*token, bool) {
 func (ts *tokenStream) string() string {
 	str := ""
 
-	ts.each(func(t *token, i int) {
+	for _, t := range ts.tokens {
 		str += t.string()
-	})
+	}
 
 	return str
 }
