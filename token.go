@@ -19,19 +19,7 @@ const (
 	tokenTypeVar     = 9
 )
 
-const (
-	quoteIdentifier          = "\""
-	additionIdentifier       = "+"
-	subtractionIdentifier    = "-"
-	multiplicationIdentifier = "*"
-	divisionIdentifier       = "/"
-	ifIdentifier             = "if"
-	spaceIdentifier          = " "
-	openParenIdentifier      = "("
-	closeParenIdentifier     = ")"
-	decimalPointIdentifier   = "."
-)
-
+// Token
 type token struct {
 	data interface{}
 	t    int
