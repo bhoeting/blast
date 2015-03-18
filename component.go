@@ -165,7 +165,7 @@ func (cs *componentStream) string() string {
 		}
 	}
 
-	return str
+	return final
 }
 
 func (i *integer) string() string {
@@ -177,7 +177,7 @@ func (f *float) string() string {
 }
 
 func (s *str) string() string {
-	return fmt.Sprintf("%v", s.data)
+	return "\"" + fmt.Sprintf("%v", s.data) + "\""
 }
 
 func (p *paren) string() string {

@@ -30,15 +30,17 @@ func TestComponentStreamFromTokenSream(t *testing.T) {
 	ts := newTokenStream("230+(221.3-900) + \"string\"").combine()
 	cs := newComponentStreamFromTokenStream(ts)
 
-	t.Log(cs.string())
-
 	assert.IsType(t, new(integer), cs.items[0])
-	assert.IsType(t, new(operator), cs.items[2])
-	assert.IsType(t, new(paren), cs.items[3])
-	assert.IsType(t, new(float), cs.items[4])
-	assert.IsType(t, new(operator), cs.items[5])
-	assert.IsType(t, new(integer), cs.items[6])
-	assert.IsType(t, new(paren), cs.items[7])
-	assert.IsType(t, new(operator), cs.items[8])
-	assert.IsType(t, new(str), cs.items[9])
+	assert.IsType(t, new(operator), cs.items[1])
+	assert.IsType(t, new(paren), cs.items[2])
+	assert.IsType(t, new(float), cs.items[3])
+	assert.IsType(t, new(operator), cs.items[4])
+	assert.IsType(t, new(integer), cs.items[5])
+	assert.IsType(t, new(paren), cs.items[6])
+	assert.IsType(t, new(operator), cs.items[7])
+	assert.IsType(t, new(str), cs.items[8])
+}
+
+func BenchmarkComponentStreamFromTokenStream(b *testing.B) {
+
 }
