@@ -188,9 +188,19 @@ func parseTokens(code string) []*token {
 	return tokens
 }
 
-// func evaluateTokens(t1 *token, t2 *token, op *token) *token {
-//
-// }
+func evaluateTokens(t1 *token, t2 *token, op *token) *token {
+	switch op.opType() {
+	case opTypeAddition:
+		return addTokens(t1, t2)
+	case opTypeSubtraction:
+		return subtractTokens(t1, t2)
+	case opTypeMultiplication:
+		return multiplyTokens(t1, t2)
+	case opTypeDivision:
+		return divideTokens(t1, t2)
+	}
+	return tokenNull
+}
 
 func addTokens(t1 *token, t2 *token) *token {
 	if t1.t == tokenTypeString || t2.t == tokenTypeString {
