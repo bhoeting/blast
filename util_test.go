@@ -9,29 +9,35 @@ import (
 // Test the stack struct
 func TestStack(t *testing.T) {
 	s := newStack()
-	s.push(3)
-	s.push(4)
-	s.push(88)
+	ts := newTokenStream("2+70.2*29").combine()
 
-	assert.Equal(t, 88, s.pop())
-	assert.Equal(t, 4, s.pop())
-	assert.Equal(t, 3, s.pop())
-	assert.Equal(t, 0, s.size())
+	for _, tok := range ts.tokens {
+		s.push(tok)
+	}
 
-	assert.IsType(t, errStackIsEmpty, s.pop())
+	assert.Equal(t, 29, s.pop().integer())
+	assert.Equal(t, opTypeMultiplication, s.pop().opType())
+	assert.Equal(t, 70.2, s.pop().float())
+	assert.Equal(t, opTypeAddition, s.pop().opType())
+	assert.Equal(t, 2, s.pop().integer())
+
+	assert.Equal(t, tokenNull, s.pop())
 }
 
 // Test the queue struct
 func TestQueue(t *testing.T) {
 	q := newQueue()
-	q.enqueue(3)
-	q.enqueue(4)
-	q.enqueue(88)
+	ts := newTokenStream("\"string\" + 200 + 23.8").combine()
 
-	assert.Equal(t, 3, q.dequeue())
-	assert.Equal(t, 4, q.dequeue())
-	assert.Equal(t, 88, q.dequeue())
-	assert.Equal(t, 0, q.size())
+	for _, tok := range ts.tokens {
+		q.enqueue(tok)
+	}
 
-	assert.IsType(t, errQueueIsEmpty, q.dequeue())
+	assert.Equal(t, "string", q.dequeue().string())
+	assert.Equal(t, opTypeAddition, q.dequeue().opType())
+	assert.Equal(t, 200, q.dequeue().integer())
+	assert.Equal(t, opTypeAddition, q.dequeue().opType())
+	assert.Equal(t, 23.8, q.dequeue().float())
+
+	assert.Equal(t, tokenNull, q.dequeue())
 }

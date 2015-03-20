@@ -7,30 +7,34 @@ import (
 )
 
 const (
-	tokenTypeUnknown = -1
-	tokenTypeOp      = 3
-	tokenTypeChar    = 2
-	tokenTypeParen   = 1
-	tokenTypeQuote   = 4
-	tokenTypeSpace   = 5
-	tokenTypeString  = 6
-	tokenTypeInt     = 7
-	tokenTypeFloat   = 8
-	tokenTypeVar     = 9
+	tokenTypeNull   = 1
+	tokenTypeOp     = 3
+	tokenTypeChar   = 2
+	tokenTypeParen  = 1
+	tokenTypeQuote  = 4
+	tokenTypeSpace  = 5
+	tokenTypeString = 6
+	tokenTypeInt    = 7
+	tokenTypeFloat  = 8
+	tokenTypeVar    = 9
 )
 
-// Token
+// Token stores data
+// and a token type
 type token struct {
 	data interface{}
 	t    int
 }
 
+// tokenStram is a token
+// slice wrapper
 type tokenStream struct {
 	tokens []*token
 	size   int
 	index  int
 }
 
+// newTokenStream returns a new tokenStream
 func newTokenStream(strTokens string) *tokenStream {
 	ts := new(tokenStream)
 	ts.tokens = parseTokens(strTokens)
@@ -39,6 +43,8 @@ func newTokenStream(strTokens string) *tokenStream {
 	return ts
 }
 
+// next returns the next item in the stream
+// and a boolean stating if an item was available
 func (ts *tokenStream) next() (*token, bool) {
 	if ts.index > ts.size-1 {
 		return new(token), false
@@ -50,6 +56,8 @@ func (ts *tokenStream) next() (*token, bool) {
 	return tok, true
 }
 
+// string returns a string representation
+// of a tokenSream
 func (ts *tokenStream) string() string {
 	str := ""
 
@@ -60,25 +68,39 @@ func (ts *tokenStream) string() string {
 	return str
 }
 
+// combine like tokens into a single token,
+// example: a stream of [3, 0, 0] will become [300]
 func (ts *tokenStream) combine() *tokenStream {
-	var replacementTokens, tokensToBeCombined []*token
+	// The token slice that will replace the current token slice
+	var replacementTokens []*token
+
+	// A slice of tokens that are to be combined
+	var tokensToBeCombined []*token
+
+	// The index of the last token to be combined
 	prevTokensEndIndex := 0
 
 	ts.each(func(token *token, index int) {
+		// If the token is a char or quote, prepare them to be combined
 		if token.t == tokenTypeChar || token.t == tokenTypeQuote {
 			tokensToBeCombined = append(tokensToBeCombined, token)
 		}
 
+		// If (the token is an operator or the end of the slice has been reached or
+		// the token is a closing paren) and the tokensToBeCombined has been added
+		// to since the combining of tokens
 		if (token.t == tokenTypeOp || index == ts.size-1 ||
 			(token.t == tokenTypeParen && token.data == parenTypeClose)) &&
 			len(tokensToBeCombined) != prevTokensEndIndex {
 
+			// Add the combined token to the replacementTokens
 			replacementTokens = append(replacementTokens,
 				combineTokens(tokensToBeCombined[prevTokensEndIndex:]))
 
 			prevTokensEndIndex = len(tokensToBeCombined)
 		}
 
+		// Add operators and parens AFTER any combinations occure
 		if token.t == tokenTypeOp || token.t == tokenTypeParen {
 			replacementTokens = append(replacementTokens, token)
 		}
@@ -90,10 +112,13 @@ func (ts *tokenStream) combine() *tokenStream {
 	return ts
 }
 
+// combineTokens combines the items in a token
+// slice into one token with a common token type
 func combineTokens(tokens []*token) *token {
 	strCombinedTok := ""
 	isNum, isDecimal, isStr := true, false, false
 
+	// If the first and last tokens are quotes
 	if tokens[0].t == tokenTypeQuote &&
 		tokens[len(tokens)-1].t == tokenTypeQuote {
 		isStr = true
@@ -221,12 +246,31 @@ func (t *token) string() string {
 	case tokenTypeParen:
 		if t.data.(int) == parenTypeClose {
 			return fmt.Sprint(")")
-		} else {
-			return fmt.Sprint("(")
 		}
+		return fmt.Sprint("(")
 	default:
 		return fmt.Sprintf("%v", t.data)
 	}
 
 	return fmt.Sprintf("%v", t.data)
+}
+
+func (t *token) str() string {
+	return t.data.(string)
+}
+
+func (t *token) integer() int {
+	return t.data.(int)
+}
+
+func (t *token) float() float64 {
+	return t.data.(float64)
+}
+
+func (t *token) opType() opType {
+	return t.data.(opType)
+}
+
+func (t *token) parenType() int {
+	return t.data.(int)
 }

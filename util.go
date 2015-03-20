@@ -5,33 +5,34 @@ import "errors"
 var (
 	errQueueIsEmpty = errors.New("Queue is empty")
 	errStackIsEmpty = errors.New("Stack is empty")
+	tokenNull       = &token{nil, tokenTypeNull}
 )
 
 // stack is a basic
 // stack implementation
 type stack struct {
-	items map[int]interface{}
+	items map[int]*token
 	count int
 }
 
 //  is a basic
 // stack implementation
 type queue struct {
-	items []interface{}
+	items []*token
 	count int
 }
 
 // newStack returns a new stack
 func newStack() *stack {
 	s := new(stack)
-	s.items = make(map[int]interface{}, 0)
+	s.items = make(map[int]*token, 0)
 	s.count = 0
 	return s
 }
 
 // push adds an item to the stack and
 // returns the new count
-func (s *stack) push(item interface{}) int {
+func (s *stack) push(item *token) int {
 	s.items[s.count] = item
 	s.count++
 
@@ -40,7 +41,7 @@ func (s *stack) push(item interface{}) int {
 
 // pop removes and returns the last
 // item from the stack
-func (s *stack) pop() interface{} {
+func (s *stack) pop() *token {
 	if s.count > 0 {
 		i := s.items[s.count-1]
 		delete(s.items, s.count)
@@ -48,7 +49,18 @@ func (s *stack) pop() interface{} {
 		return i
 	}
 
-	return errStackIsEmpty
+	return tokenNull
+}
+
+// top returns the next item
+// that will be popped without
+// removing the item
+func (s *stack) top() *token {
+	if s.count > 0 {
+		return s.items[s.count-1]
+	}
+
+	return tokenNull
 }
 
 // size returns the stack's stize
@@ -65,7 +77,7 @@ func newQueue() *queue {
 
 // enqueue adds a new item
 // to the back of the queue
-func (q *queue) enqueue(item interface{}) int {
+func (q *queue) enqueue(item *token) int {
 	q.items = append(q.items, item)
 	q.count++
 	return q.count
@@ -73,7 +85,7 @@ func (q *queue) enqueue(item interface{}) int {
 
 // dequeue removes and returns the first
 // item in the queue
-func (q *queue) dequeue() interface{} {
+func (q *queue) dequeue() *token {
 	if q.count > 0 {
 		i := q.items[0]
 		q.items = q.items[1:]
@@ -81,7 +93,13 @@ func (q *queue) dequeue() interface{} {
 		return i
 	}
 
-	return errQueueIsEmpty
+	return tokenNull
+}
+
+func (q *queue) each(f func(item *token)) {
+	for _, tok := range q.items {
+		f(tok)
+	}
 }
 
 // size returns the queue's stize

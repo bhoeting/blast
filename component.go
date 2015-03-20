@@ -12,12 +12,15 @@ const (
 	opTypeParen
 )
 
-var precedenceMap map[opType]int = map[opType]int{
-	opTypeAddition:       1,
-	opTypeDivision:       2,
-	opTypeSubtraction:    1,
-	opTypeMultiplication: 2,
-}
+type compType int
+
+const (
+	compTypeInt compType = iota
+	compTypeVar
+	compTypeFloat
+	compTypeString
+	compTypeOperator
+)
 
 const (
 	parenTypeOpen  = 1
@@ -25,6 +28,8 @@ const (
 )
 
 type component interface {
+	// compType() compType
+	// isValue() bool
 }
 
 type str struct {
