@@ -45,3 +45,23 @@ func TestCombiningOfTokens(t *testing.T) {
 	assert.Equal(t, tokenTypeOp, ts.tokens[7].t)
 	assert.Equal(t, tokenTypeString, ts.tokens[8].t)
 }
+
+func TestTokenOperations(t *testing.T) {
+	add := newTokenStream("222+4").combine()
+	assert.Equal(t, 226, addTokens(add.tokens[0], add.tokens[2]).integer())
+
+	add = newTokenStream("200+2.2").combine()
+	assert.Equal(t, 202.2, addTokens(add.tokens[0], add.tokens[2]).float())
+
+	add = newTokenStream("200+\"string\"").combine()
+	assert.Equal(t, "200string", addTokens(add.tokens[0], add.tokens[2]).str())
+
+	mult := newTokenStream("7*8").combine()
+	assert.Equal(t, 56, multiplyTokens(mult.tokens[0], mult.tokens[2]).integer())
+
+	mult = newTokenStream("7.7*8.99").combine()
+	assert.Equal(t, 69.223, multiplyTokens(mult.tokens[0], mult.tokens[2]).float())
+
+	mult = newTokenStream("3*\"string\"").combine()
+	assert.Equal(t, "stringstringstring", multiplyTokens(mult.tokens[0], mult.tokens[2]).string())
+}
