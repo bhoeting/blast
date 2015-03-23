@@ -6,6 +6,31 @@ import (
 	"unicode"
 )
 
+type opType int
+
+const (
+	opTypeAddition opType = iota
+	opTypeSubtraction
+	opTypeMultiplication
+	opTypeDivision
+	opTypeParen
+)
+
+type compType int
+
+const (
+	compTypeInt compType = iota
+	compTypeVar
+	compTypeFloat
+	compTypeString
+	compTypeOperator
+)
+
+const (
+	parenTypeOpen  = 1
+	parenTypeClose = 2
+)
+
 const (
 	tokenTypeNull       = 1
 	tokenTypeOp         = 3
