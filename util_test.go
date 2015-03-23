@@ -33,7 +33,7 @@ func TestQueue(t *testing.T) {
 		q.enqueue(tok)
 	}
 
-	assert.Equal(t, "string", q.dequeue().string())
+	assert.Equal(t, "\"string\"", q.dequeue().string())
 	assert.Equal(t, opTypeAddition, q.dequeue().opType())
 	assert.Equal(t, 200, q.dequeue().integer())
 	assert.Equal(t, opTypeAddition, q.dequeue().opType())

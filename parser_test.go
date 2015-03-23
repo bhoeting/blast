@@ -7,14 +7,15 @@ import (
 )
 
 func TestReversePolishNotation(t *testing.T) {
-	actual := newTokenStream("40 + (3 * 30.6)").combine().toReversePolishNotation().string()
-	expected := "40330.6*+"
+	actual := newTokenStream("40 + (3 * 30.6)").combine().toRPN().string()
+	expected := "40,3,30.6,*,+,"
 
 	assert.Equal(t, expected, actual)
 }
 
-func TestElementTree(t *testing.T) {
-	tree := newElementTree(newTokenStream("40+(3*30.6))"))
-	tree.string()
-	t.Log(tree.string())
+func TestEvaluationOfTokenStream(t *testing.T) {
+	actual := newTokenStream("40 + 3 * 0.5").combine().toRPN().evaluate().data
+	expected := 41.5
+
+	assert.Equal(t, expected, actual)
 }

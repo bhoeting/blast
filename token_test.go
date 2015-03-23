@@ -63,5 +63,5 @@ func TestTokenOperations(t *testing.T) {
 	assert.Equal(t, 69.223, multiplyTokens(mult.tokens[0], mult.tokens[2]).float())
 
 	mult = newTokenStream("3*\"string\"").combine()
-	assert.Equal(t, "stringstringstring", multiplyTokens(mult.tokens[0], mult.tokens[2]).string())
+	assert.Equal(t, "stringstringstring", multiplyTokens(mult.tokens[0], mult.tokens[2]).str())
 }

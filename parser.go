@@ -7,83 +7,29 @@ var precedenceMap = map[opType]int{
 	opTypeMultiplication: 2,
 }
 
-type elType int
+// evaluate evaluates a token stream into one token
+func (input *tokenStream) evaluate() *token {
+	s := newStack()
 
-const (
-	elTypeConst = iota
-	elTypeExp
-)
+	for _, t := range input.tokens {
+		if isValue(t) {
+			s.push(t)
+			continue
+		}
 
-// element is a struct that can either
-// be an "expression", in which case it
-// will store two more elements and an
-// operation. It can also be a constant,
-// in which case it stores one token
-type element struct {
-	e1 *element
-	e2 *element
-	op *token
-	c  *token
-	t  elType
-}
-
-// newElementTree creates an abstract syntax tree
-// of elements
-func newElementTree(ts *tokenStream) *element {
-	return buildElementTree(ts.combine().toReversePolishNotation().tokens)
-}
-
-// buildElementTree recursively builds an abstract
-// syntax tree of elements. The token slice argument
-// must be in reverse polish notation
-func buildElementTree(tokens []*token) *element {
-	tree := new(element)
-
-	if len(tokens) == 1 {
-		tree.t = elTypeConst
-		tree.c = tokens[0]
-		return tree
-	}
-
-	for i := len(tokens) - 1; i >= 0; i-- {
-		if isOp(tokens[i]) {
-			tree.op = tokens[i]
-			tree.t = elTypeExp
-			tree.e1 = buildElementTree(tokens[0:1])
-			tree.e2 = buildElementTree(tokens[1:i])
-			return tree
+		if isOp(t) {
+			s.push(evaluateTokens(s.pop(), s.pop(), t))
 		}
 	}
 
-	return tree
+	return s.pop()
 }
 
-// string returns a string representation
-// of an element tree
-func (e *element) string() string {
-	str := buildElementTreeString("", e)
-	return str
-}
-
-// buildElementTreeString recursively creates a string
-// representing an element tree
-func buildElementTreeString(str string, e *element) string {
-	if e.t == elTypeConst {
-		str += e.c.string()
-	} else {
-		str = buildElementTreeString(str, e.e1)
-		str += e.op.string()
-		str = buildElementTreeString(str, e.e2)
-	}
-
-	return str
-}
-
-// toReversePolishNotation converts a group of components
+// toRPN converts a group of components
 // in infix notation to reverse polish notation. This is
 // an implementation of the "Shunting yard" algorithm
 // (wikipedia.org/wiki/Shunting-yard_algorithm)
-func (input *tokenStream) toReversePolishNotation() *tokenStream {
+func (input *tokenStream) toRPN() *tokenStream {
 	ops := newStack()
 	output := newQueue()
 
@@ -153,6 +99,7 @@ func isParen(token *token) bool {
 	return token.t == tokenTypeParen
 }
 
+// isOpenParen determines if the token is an open paren
 func isOpenParen(token *token) bool {
 	return isParen(token) && token.parenType() == parenTypeOpen
 }
