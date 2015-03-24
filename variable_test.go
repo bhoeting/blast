@@ -63,6 +63,12 @@ func TestVariableDeclaration(t *testing.T) {
 func TestVariableUsage(t *testing.T) {
 	Init()
 	Parse("n=3")
+	Parse("x=4")
+	Parse("s=\"string\"")
 
-	assert.Equal(t, "5", Parse("n+2"))
+	assert.Equal(t, "3", Parse("n"))
+	assert.Equal(t, "5", Parse("2+n"))
+	assert.Equal(t, "100", Parse("n=n+97"))
+	assert.Equal(t, "\"100string\"", Parse("n+s"))
+	assert.Equal(t, "\"stringstringstringstring\"", Parse("x*s"))
 }

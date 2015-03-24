@@ -36,7 +36,7 @@ const (
 	tokenTypeNull       = 1
 	tokenTypeOp         = 3
 	tokenTypeChar       = 2
-	tokenTypeParen      = 1
+	tokenTypeParen      = 100
 	tokenTypeQuote      = 4
 	tokenTypeSpace      = 5
 	tokenTypeString     = 6
@@ -222,10 +222,9 @@ func parseTokens(code string) []*token {
 
 func evaluateTokens(t1 *token, t2 *token, op *token) *token {
 
-	evaluateSingleToken(t2, false)
-
-	if op.opType() != tokenTypeAssignment {
-		evaluateSingleToken(t1, true)
+	t2 = evaluateSingleToken(t2, false)
+	if op.opType() != opTypeAssignment {
+		t1 = evaluateSingleToken(t1, true)
 	}
 
 	switch op.opType() {
@@ -245,8 +244,8 @@ func evaluateTokens(t1 *token, t2 *token, op *token) *token {
 
 func evaluateSingleToken(t *token, shouldDeclare bool) *token {
 	if t.t == tokenTypeVar {
-		if v, err := B.getVariable(t.data.(string)); err != nil {
-			println("converting shit to string")
+		v, err := B.getVariable(t.data.(string))
+		if err == nil {
 			t = v.toToken()
 		} else {
 			if shouldDeclare {

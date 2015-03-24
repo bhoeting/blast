@@ -74,8 +74,8 @@ func (b *Blast) addVariable(v *variable) *variable {
 
 // getVariable gets a variable
 func (b *Blast) getVariable(name string) (*variable, error) {
-	if _, ok := b.vars[name]; ok {
-		return b.vars[name], nil
+	if v, ok := b.vars[name]; ok {
+		return v, nil
 	}
 
 	return new(variable), errVarNotFound
@@ -92,6 +92,20 @@ func (b *Blast) removeVariable(name string) *Blast {
 func (b *Blast) setVariable(name string, data interface{}) *variable {
 	b.vars[name] = newVariable(name, data)
 	return b.vars[name]
+}
+
+// string returns a string representation
+// of a Blast struct
+func (b *Blast) string() string {
+	str := "variables: {\n"
+
+	for name, v := range b.vars {
+		str += fmt.Sprintf("\t%v: %v\n", name, v.string())
+	}
+
+	str += "}"
+
+	return str
 }
 
 // newVariable returns a new variable
@@ -144,6 +158,5 @@ func (v *variable) str() string {
 
 // toToken converts the variable to a token
 func (v *variable) toToken() *token {
-	fmt.Printf("converting %v to token %v\n", v.name, v.data)
 	return newToken(v.data, varToToken[v.t])
 }
