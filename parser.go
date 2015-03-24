@@ -1,6 +1,7 @@
 package blast
 
 var precedenceMap = map[opType]int{
+	opTypeAssignment:     0,
 	opTypeAddition:       1,
 	opTypeDivision:       2,
 	opTypeSubtraction:    1,
@@ -18,14 +19,15 @@ func (input *tokenStream) evaluate() *token {
 		}
 
 		if isOp(t) {
-			s.push(evaluateTokens(s.pop(), s.pop(), t))
+			t1, t2 := s.pop(), s.pop()
+			s.push(evaluateTokens(t2, t1, t))
 		}
 	}
 
-	return s.pop()
+	return evaluateSingleToken(s.pop(), false)
 }
 
-// toRPN converts a group of components
+// toRPN converts a group of tokens
 // in infix notation to reverse polish notation. This is
 // an implementation of the "Shunting yard" algorithm
 // (wikipedia.org/wiki/Shunting-yard_algorithm)

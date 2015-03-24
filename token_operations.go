@@ -1,6 +1,19 @@
 package blast
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
+
+func assignTokens(t1 *token, t2 *token) *token {
+	if t1.t == tokenTypeVar && t2.t != tokenTypeVar {
+		v := B.setVariable(t1.data.(string), t2.data)
+		return v.toToken()
+	}
+
+	log.Fatalf("%v", "Left token must be a variable")
+	return tokenNull
+}
 
 func addTokens(t1 *token, t2 *token) *token {
 	if t1.t == tokenTypeString {
@@ -39,7 +52,7 @@ func subtractTokens(t1 *token, t2 *token) *token {
 	}
 
 	if isIntInt(t1, t2) {
-		return newToken(t1.integer()+t2.integer(), tokenTypeInt)
+		return newToken(t1.integer()-t2.integer(), tokenTypeInt)
 	}
 
 	if isIntFloat(t1, t2) {

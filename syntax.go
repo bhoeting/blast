@@ -11,4 +11,5 @@ const (
 	openParenIdentifier      = "("
 	closeParenIdentifier     = ")"
 	decimalPointIdentifier   = "."
+	assignmentIdentifier     = "="
 )

@@ -14,6 +14,7 @@ const (
 	opTypeMultiplication
 	opTypeDivision
 	opTypeParen
+	opTypeAssignment
 )
 
 type compType int
@@ -44,6 +45,12 @@ const (
 	tokenTypeVar        = 9
 	tokenTypeAssignment = 10
 )
+
+var varToToken = map[varType]int{
+	varTypeString: tokenTypeString,
+	varTypeFloat:  tokenTypeFloat,
+	varTypeInt:    tokenTypeInt,
+}
 
 // Token stores data
 // and a token type
@@ -214,6 +221,13 @@ func parseTokens(code string) []*token {
 }
 
 func evaluateTokens(t1 *token, t2 *token, op *token) *token {
+
+	evaluateSingleToken(t2, false)
+
+	if op.opType() != tokenTypeAssignment {
+		evaluateSingleToken(t1, true)
+	}
+
 	switch op.opType() {
 	case opTypeAddition:
 		return addTokens(t1, t2)
@@ -223,8 +237,27 @@ func evaluateTokens(t1 *token, t2 *token, op *token) *token {
 		return multiplyTokens(t1, t2)
 	case opTypeDivision:
 		return divideTokens(t1, t2)
+	case opTypeAssignment:
+		return assignTokens(t1, t2)
 	}
 	return tokenNull
+}
+
+func evaluateSingleToken(t *token, shouldDeclare bool) *token {
+	if t.t == tokenTypeVar {
+		if v, err := B.getVariable(t.data.(string)); err != nil {
+			println("converting shit to string")
+			t = v.toToken()
+		} else {
+			if shouldDeclare {
+				B.addEmptyVariable(t.data.(string))
+			} else {
+				t = tokenNull
+			}
+		}
+	}
+
+	return t
 }
 
 func parseToken(strToken string) *token {
@@ -261,6 +294,8 @@ func parseOperator(strToken string) opType {
 		return opTypeMultiplication
 	case divisionIdentifier:
 		return opTypeDivision
+	case assignmentIdentifier:
+		return opTypeAssignment
 	default:
 		return -1
 	}
@@ -315,4 +350,8 @@ func (t *token) opType() opType {
 
 func (t *token) parenType() int {
 	return t.data.(int)
+}
+
+func (t *token) variable() *variable {
+	return t.data.(*variable)
 }
