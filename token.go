@@ -2,6 +2,7 @@ package blast
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -33,6 +34,7 @@ const (
 	tokenTypeParen
 	tokenTypeUnkown
 	tokenTypeString
+	tokenTypeBoolean
 	tokenTypeOperator
 )
 
@@ -47,6 +49,7 @@ var tokenTypeStrings = map[tokenType]string{
 	tokenTypeParen:    "paren",
 	tokenTypeString:   "string",
 	tokenTypeUnkown:   "unkown",
+	tokenTypeBoolean:  "boolean",
 	tokenTypeOperator: "operator",
 }
 
@@ -82,7 +85,7 @@ type tokenStream struct {
 	size   int
 }
 
-var varToToken = map[varType]int{
+var varToToken = map[varType]tokenType{
 	varTypeString: tokenTypeString,
 	varTypeFloat:  tokenTypeFloat,
 	varTypeInt:    tokenTypeInt,
@@ -285,11 +288,68 @@ func newOperatorToken(text string, start int, end int) *token {
 	return newToken(operatorIdentifiers[text], start, end, tokenTypeOperator)
 }
 
+// newBooleanToken returns a new boolean token
+func newBooleanToken(text string, start int, end int) *token {
+	data := false
+
+	if text == trueIdentifier {
+		data = true
+	}
+
+	return newToken(data, start, end, tokenTypeBoolean)
+}
+
+// evaluateToken evalutes a single token
+func evaluateToken(t *token) *token {
+	if t.t == tokenTypeVar {
+		return getTokenFromVariableToken(t)
+	}
+
+	return t
+}
+
 // evaluateTokens performs an operation on two tokens
 func evaluateTokens(t1 *token, t2 *token, op *token) *token {
+
+	if op.opType() != opTypeAssignment {
+		t1 = evaluateToken(t1)
+	}
+
+	t2 = evaluateToken(t2)
+
+	switch op.opType() {
+	case opTypeAddition:
+		return addTokens(t1, t2)
+	case opTypeSubtraction:
+		return subtractTokens(t1, t2)
+	case opTypeMultiplication:
+		return multiplyTokens(t1, t2)
+	case opTypeDivision:
+		return divideTokens(t1, t2)
+	case opTypeAssignment:
+		return assignTokens(t1, t2)
+	default:
+		return compareTokens(t1, t2, op.opType())
+	}
+
 	return tokenNull
 }
 
+// getTokenFromVariableToken returns a new token
+// with the value of the variable specified by
+// the token
+func getTokenFromVariableToken(t *token) *token {
+	v, err := B.getVariable(t.data.(string))
+
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	return newToken(v.data, t.start, t.end, varToToken[v.t])
+}
+
+// string returns a string representation
+// of a token
 func (t *token) string() string {
 	switch t.t {
 	case tokenTypeOperator:
@@ -298,7 +358,6 @@ func (t *token) string() string {
 				return fmt.Sprintf("%v", opIdentifier)
 			}
 		}
-
 		return fmt.Sprintf("%v", "Optype uknown")
 	case tokenTypeParen:
 		if t.data.(int) == parenTypeClose {
@@ -334,6 +393,10 @@ func (t *token) parenType() int {
 	return t.data.(int)
 }
 
-func (t *token) variable() *variable {
-	return t.data.(*variable)
+func (t *token) number() float64 {
+	if n, ok := t.data.(int); ok {
+		return float64(n)
+	}
+
+	return t.data.(float64)
 }

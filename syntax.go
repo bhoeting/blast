@@ -17,4 +17,6 @@ const (
 	greaterThanIdentifier        = ">"
 	lessThanOrEqualIdentifier    = "<="
 	greaterThanOrEqualIdentifier = ">="
+	trueIdentifier               = "true"
+	falseIdentifier              = "false"
 )

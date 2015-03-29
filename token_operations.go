@@ -1,184 +1,205 @@
 package blast
 
-// import (
-// 	"log"
-// 	"strings"
-// )
+import (
+	"log"
+	"strings"
+)
 
-// func assignTokens(t1 *token, t2 *token) *token {
-// 	if t1.t == tokenTypeVar && t2.t != tokenTypeVar {
-// 		v := B.setVariable(t1.data.(string), t2.data)
-// 		return v.toToken()
-// 	}
+func compareTokens(t1 *token, t2 *token, opType opType) *token {
+	var result bool
 
-// 	log.Fatalf("%v", "Left token must be a variable")
-// 	return tokenNull
-// }
+	switch opType {
+	case opTypeEqualTo:
+		result = t1.number() == t2.number()
+	case opTypeLessThan:
+		result = t1.number() < t2.number()
+	case opTypeGreaterThan:
+		result = t1.number() > t2.number()
+	case opTypeLessThanOrEqualTo:
+		result = t1.number() <= t2.number()
+	case opTypeGreaterThanOrEqualTo:
+		result = t1.number() >= t2.number()
+	default:
+		result = true
+	}
 
-// func addTokens(t1 *token, t2 *token) *token {
-// 	if t1.t == tokenTypeString {
-// 		if t2.t == tokenTypeString {
-// 			return newToken(t1.str()+t2.str(), tokenTypeString)
-// 		}
-// 		return newToken(t1.str()+t2.string(), tokenTypeString)
-// 	}
+	return newToken(result, 0, 0, tokenTypeBoolean)
+}
 
-// 	if t2.t == tokenTypeString {
-// 		return newToken(t1.string()+t2.str(), tokenTypeString)
-// 	}
+func assignTokens(t1 *token, t2 *token) *token {
+	if t1.t == tokenTypeVar && t2.t != tokenTypeVar {
+		v := B.setVariable(t1.data.(string), t2.data)
+		return v.toToken()
+	}
 
-// 	if isIntInt(t1, t2) {
-// 		return newToken(t1.integer()+t2.integer(), tokenTypeInt)
-// 	}
+	log.Fatalf("%v", "Left token must be a variable")
+	return tokenNull
+}
 
-// 	if isIntFloat(t1, t2) {
-// 		return newToken(float64(t1.integer())+t2.float(), tokenTypeFloat)
-// 	}
+func addTokens(t1 *token, t2 *token) *token {
+	if t1.t == tokenTypeString {
+		if t2.t == tokenTypeString {
+			return newToken(t1.str()+t2.str(), 0, 0, tokenTypeString)
+		}
+		return newToken(t1.str()+t2.string(), 0, 0, tokenTypeString)
+	}
 
-// 	if isFloatFloat(t1, t2) {
-// 		return newToken(t1.float()+t2.float(), tokenTypeFloat)
-// 	}
+	if t2.t == tokenTypeString {
+		return newToken(t1.string()+t2.str(), 0, 0, tokenTypeString)
+	}
 
-// 	if isFloatInt(t1, t2) {
-// 		return newToken(t1.float()+float64(t2.integer()), tokenTypeFloat)
-// 	}
+	if isIntInt(t1, t2) {
+		return newToken(t1.integer()+t2.integer(), 0, 0, tokenTypeInt)
+	}
 
-// 	return newToken(t1.string()+t2.string(), tokenTypeString)
-// }
+	if isIntFloat(t1, t2) {
+		return newToken(float64(t1.integer())+t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// func subtractTokens(t1 *token, t2 *token) *token {
-// 	if t1.t == tokenTypeString || t2.t == tokenTypeString {
-// 		// todo: throw err
-// 	}
+	if isFloatFloat(t1, t2) {
+		return newToken(t1.float()+t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isIntInt(t1, t2) {
-// 		return newToken(t1.integer()-t2.integer(), tokenTypeInt)
-// 	}
+	if isFloatInt(t1, t2) {
+		return newToken(t1.float()+float64(t2.integer()), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isIntFloat(t1, t2) {
-// 		return newToken(float64(t1.integer())-t2.float(), tokenTypeFloat)
-// 	}
+	return newToken(t1.string()+t2.string(), 0, 0, tokenTypeString)
+}
 
-// 	if isFloatFloat(t1, t2) {
-// 		return newToken(t1.float()-t2.float(), tokenTypeFloat)
-// 	}
+func subtractTokens(t1 *token, t2 *token) *token {
+	if t1.t == tokenTypeString || t2.t == tokenTypeString {
+		// todo: throw err
+	}
 
-// 	if isFloatInt(t1, t2) {
-// 		return newToken(t1.float()-float64(t2.integer()), tokenTypeFloat)
-// 	}
+	if isIntInt(t1, t2) {
+		return newToken(t1.integer()-t2.integer(), 0, 0, tokenTypeInt)
+	}
 
-// 	return newToken(t1.string()+t2.string(), tokenTypeString)
-// }
+	if isIntFloat(t1, t2) {
+		return newToken(float64(t1.integer())-t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// func multiplyTokens(t1 *token, t2 *token) *token {
+	if isFloatFloat(t1, t2) {
+		return newToken(t1.float()-t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isIntInt(t1, t2) {
-// 		return newToken(t1.integer()*t2.integer(), tokenTypeInt)
-// 	}
+	if isFloatInt(t1, t2) {
+		return newToken(t1.float()-float64(t2.integer()), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isIntFloat(t1, t2) {
-// 		return newToken(float64(t1.integer())*t2.float(), tokenTypeFloat)
-// 	}
+	return newToken(t1.string()+t2.string(), 0, 0, tokenTypeString)
+}
 
-// 	if isIntString(t1, t2) {
-// 		return newToken(strings.Repeat(t2.str(), t1.integer()), tokenTypeString)
-// 	}
+func multiplyTokens(t1 *token, t2 *token) *token {
 
-// 	if isFloatFloat(t1, t2) {
-// 		return newToken(t1.float()*t2.float(), tokenTypeFloat)
-// 	}
+	if isIntInt(t1, t2) {
+		return newToken(t1.integer()*t2.integer(), 0, 0, tokenTypeInt)
+	}
 
-// 	if isFloatInt(t1, t2) {
-// 		return newToken(t1.float()*float64(t2.integer()), tokenTypeFloat)
-// 	}
+	if isIntFloat(t1, t2) {
+		return newToken(float64(t1.integer())*t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isStringInt(t1, t2) {
-// 		return newToken(strings.Repeat(t1.str(), t2.integer()), tokenTypeString)
-// 	}
+	if isIntString(t1, t2) {
+		return newToken(strings.Repeat(t2.str(), t1.integer()), 0, 0, tokenTypeString)
+	}
 
-// 	return tokenNull
-// }
+	if isFloatFloat(t1, t2) {
+		return newToken(t1.float()*t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// func divideTokens(t1 *token, t2 *token) *token {
-// 	if isIntInt(t1, t2) {
-// 		return newToken(t1.integer()/t2.integer(), tokenTypeInt)
-// 	}
+	if isFloatInt(t1, t2) {
+		return newToken(t1.float()*float64(t2.integer()), 0, 0, tokenTypeFloat)
+	}
 
-// 	if isIntFloat(t1, t2) {
-// 		return newToken(float64(t1.integer())/t2.float(), tokenTypeFloat)
-// 	}
+	if isStringInt(t1, t2) {
+		return newToken(strings.Repeat(t1.str(), t2.integer()), 0, 0, tokenTypeString)
+	}
 
-// 	if isFloatFloat(t1, t2) {
-// 		return newToken(t1.float()/t2.float(), tokenTypeFloat)
-// 	}
+	return tokenNull
+}
 
-// 	if isFloatInt(t1, t2) {
-// 		return newToken(t1.float()/float64(t2.integer()), tokenTypeFloat)
-// 	}
+func divideTokens(t1 *token, t2 *token) *token {
+	if isIntInt(t1, t2) {
+		return newToken(t1.integer()/t2.integer(), 0, 0, tokenTypeInt)
+	}
 
-// 	return tokenNull
-// }
+	if isIntFloat(t1, t2) {
+		return newToken(float64(t1.integer())/t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// func isIntInt(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeInt && t2.t == tokenTypeInt
-// }
+	if isFloatFloat(t1, t2) {
+		return newToken(t1.float()/t2.float(), 0, 0, tokenTypeFloat)
+	}
 
-// func isIntString(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeInt && t2.t == tokenTypeString
-// }
+	if isFloatInt(t1, t2) {
+		return newToken(t1.float()/float64(t2.integer()), 0, 0, tokenTypeFloat)
+	}
 
-// func isIntFloat(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeInt && t2.t == tokenTypeFloat
-// }
+	return tokenNull
+}
 
-// func isIntVar(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeString && t2.t == tokenTypeVar
-// }
+func isIntInt(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeInt && t2.t == tokenTypeInt
+}
 
-// func isFloatFloat(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeFloat && t2.t == tokenTypeFloat
-// }
+func isIntString(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeInt && t2.t == tokenTypeString
+}
 
-// func isFloatInt(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeFloat && t2.t == tokenTypeInt
-// }
+func isIntFloat(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeInt && t2.t == tokenTypeFloat
+}
 
-// func isFloatVar(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeFloat && t2.t == tokenTypeVar
-// }
+func isIntVar(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeString && t2.t == tokenTypeVar
+}
 
-// func isFloatString(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeFloat && t2.t == tokenTypeString
-// }
+func isFloatFloat(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeFloat && t2.t == tokenTypeFloat
+}
 
-// func isStringString(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeString && t2.t == tokenTypeString
-// }
+func isFloatInt(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeFloat && t2.t == tokenTypeInt
+}
 
-// func isStringInt(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeString && t2.t == tokenTypeInt
-// }
+func isFloatVar(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeFloat && t2.t == tokenTypeVar
+}
 
-// func isStringFloat(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeString && t2.t == tokenTypeInt
-// }
+func isFloatString(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeFloat && t2.t == tokenTypeString
+}
 
-// func isStringVar(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeString && t2.t == tokenTypeVar
-// }
+func isStringString(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeString && t2.t == tokenTypeString
+}
 
-// func isVarVar(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeVar && t2.t == tokenTypeVar
-// }
+func isStringInt(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeString && t2.t == tokenTypeInt
+}
 
-// func isVarInt(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeVar && t2.t == tokenTypeInt
-// }
+func isStringFloat(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeString && t2.t == tokenTypeInt
+}
 
-// func isVarFloat(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeVar && t2.t == tokenTypeFloat
-// }
+func isStringVar(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeString && t2.t == tokenTypeVar
+}
 
-// func isVarString(t1 *token, t2 *token) bool {
-// 	return t1.t == tokenTypeVar && t2.t == tokenTypeString
-// }
+func isVarVar(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeVar && t2.t == tokenTypeVar
+}
+
+func isVarInt(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeVar && t2.t == tokenTypeInt
+}
+
+func isVarFloat(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeVar && t2.t == tokenTypeFloat
+}
+
+func isVarString(t1 *token, t2 *token) bool {
+	return t1.t == tokenTypeVar && t2.t == tokenTypeString
+}

@@ -12,8 +12,11 @@ func TestReversePolishNotation(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-// func TestEvaluationOfTokenStream(t *testing.T) {
-// 	actual := newTokenStream(newLexemeStream("40 + 3 * 0.5")).toRPN().string().data
-// 	expected := 41.5
-// 	assert.Equal(t, expected, actual)
-// }
+func TestEvaluationOfTokenStream(t *testing.T) {
+	actual := newTokenStream(newLexemeStream("40 + 3 * 0.5")).toRPN().evaluate().data
+	expected := 41.5
+	assert.Equal(t, expected, actual)
+
+	actual = newTokenStream(newLexemeStream("2 >= 3")).toRPN().evaluate().data
+	assert.Equal(t, false, actual)
+}

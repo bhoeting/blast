@@ -37,6 +37,18 @@ type variable struct {
 	t    varType
 }
 
+// variableNotDeclaredError is an error
+// thrown when a variable is accessed
+// but has not been declared
+type variableNotDeclaredError struct {
+	vName string
+}
+
+// Error returns a string with an error message
+func (err *variableNotDeclaredError) Error() string {
+	return fmt.Sprintf("Variable %v not declared.", err.vName)
+}
+
 // NewBlast returns a new Blast struct
 func NewBlast() *Blast {
 	b := new(Blast)
@@ -79,7 +91,7 @@ func (b *Blast) getVariable(name string) (*variable, error) {
 		return v, nil
 	}
 
-	return new(variable), errVarNotFound
+	return new(variable), &variableNotDeclaredError{name}
 }
 
 // removeVariable removes a variable from the
@@ -155,4 +167,9 @@ func (v *variable) float() float64 {
 // value of a variable
 func (v *variable) str() string {
 	return v.data.(string)
+}
+
+// toToken converts the variable to a token
+func (v *variable) toToken() *token {
+	return newToken(v.data, 0, 0, varToToken[v.t])
 }

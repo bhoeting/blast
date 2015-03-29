@@ -24,8 +24,7 @@ func (input *tokenStream) evaluate() *token {
 		}
 	}
 
-	// return evaluateSingleToken(s.pop(), false)
-	return s.pop()
+	return evaluateToken(s.pop())
 }
 
 // toRPN converts a group of tokens
