@@ -53,7 +53,8 @@ func Init() {
 // Parse turns a string of code into
 // language components
 func Parse(code string) string {
-	ts := newTokenStream(code).combine().toRPN().evaluate()
+	ls := newLexemeStream(code)
+	ts := newTokenStream(ls).toRPN().evaluate()
 	return ts.string()
 }
 
@@ -154,9 +155,4 @@ func (v *variable) float() float64 {
 // value of a variable
 func (v *variable) str() string {
 	return v.data.(string)
-}
-
-// toToken converts the variable to a token
-func (v *variable) toToken() *token {
-	return newToken(v.data, varToToken[v.t])
 }

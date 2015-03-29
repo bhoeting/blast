@@ -6,62 +6,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// testTokenStream tests that the correct
-// token type is created for each token
-// in the test string
 func TestTokenStream(t *testing.T) {
-	ts := newTokenStream("2+(2-9) + \"")
+	ls := newLexemeStream("20+4*12.99+\"string\"")
+	ts := newTokenStream(ls)
 
-	// The desired token types
-	tokenTypes := []int{
-		tokenTypeChar, tokenTypeOp,
-		tokenTypeParen, tokenTypeChar,
-		tokenTypeOp, tokenTypeChar,
-		tokenTypeParen, tokenTypeSpace,
-		tokenTypeOp, tokenTypeSpace,
-		tokenTypeQuote,
-	}
+	assert.Equal(t, tokenTypeInt, ts.get(0).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(1).t)
+	assert.Equal(t, tokenTypeInt, ts.get(2).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(3).t)
+	assert.Equal(t, tokenTypeFloat, ts.get(4).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(5).t)
+	assert.Equal(t, tokenTypeString, ts.get(6).t)
 
-	// Check that each token matches the
-	// desired token types
-	ts.each(func(tok *token, index int) {
-		if tokenTypes[index] != tok.t {
-			t.Fatalf("Could not get correct token types, index: %v want: %v got: %v",
-				ts.index, tokenTypes[index], tok.t)
-		}
-	})
-}
+	ls = newLexemeStream("\"derp\"==5")
+	ts = newTokenStream(ls)
 
-func TestCombiningOfTokens(t *testing.T) {
-	ts := newTokenStream("(23+\"string\") + 300.2 + \"derp\"").combine()
+	assert.Equal(t, tokenTypeString, ts.get(0).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(1).t)
+	assert.Equal(t, tokenTypeInt, ts.get(2).t)
 
-	assert.Equal(t, tokenTypeParen, ts.tokens[0].t)
-	assert.Equal(t, tokenTypeInt, ts.tokens[1].t)
-	assert.Equal(t, tokenTypeOp, ts.tokens[2].t)
-	assert.Equal(t, tokenTypeString, ts.tokens[3].t)
-	assert.Equal(t, tokenTypeParen, ts.tokens[4].t)
-	assert.Equal(t, tokenTypeOp, ts.tokens[5].t)
-	assert.Equal(t, tokenTypeFloat, ts.tokens[6].t)
-	assert.Equal(t, tokenTypeOp, ts.tokens[7].t)
-	assert.Equal(t, tokenTypeString, ts.tokens[8].t)
-}
+	ls = newLexemeStream("if x <= 22")
+	ts = newTokenStream(ls)
 
-func TestTokenOperations(t *testing.T) {
-	add := newTokenStream("222+4").combine()
-	assert.Equal(t, 226, addTokens(add.tokens[0], add.tokens[2]).integer())
+	assert.Equal(t, tokenTypeIf, ts.get(0).t)
+	assert.Equal(t, tokenTypeVar, ts.get(1).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(2).t)
+	assert.Equal(t, tokenTypeInt, ts.get(3).t)
 
-	add = newTokenStream("200+2.2").combine()
-	assert.Equal(t, 202.2, addTokens(add.tokens[0], add.tokens[2]).float())
+	ls = newLexemeStream("50 + (4 * 30.6)")
+	ts = newTokenStream(ls)
 
-	add = newTokenStream("200+\"string\"").combine()
-	assert.Equal(t, "200string", addTokens(add.tokens[0], add.tokens[2]).str())
+	t.Log(ts.string())
 
-	mult := newTokenStream("7*8").combine()
-	assert.Equal(t, 56, multiplyTokens(mult.tokens[0], mult.tokens[2]).integer())
-
-	mult = newTokenStream("7.7*8.99").combine()
-	assert.Equal(t, 69.223, multiplyTokens(mult.tokens[0], mult.tokens[2]).float())
-
-	mult = newTokenStream("3*\"string\"").combine()
-	assert.Equal(t, "stringstringstring", multiplyTokens(mult.tokens[0], mult.tokens[2]).str())
+	assert.Equal(t, tokenTypeInt, ts.get(0).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(1).t)
+	assert.Equal(t, tokenTypeParen, ts.get(2).t)
+	assert.Equal(t, tokenTypeInt, ts.get(3).t)
+	assert.Equal(t, tokenTypeOperator, ts.get(4).t)
+	assert.Equal(t, tokenTypeFloat, ts.get(5).t)
+	assert.Equal(t, tokenTypeParen, ts.get(6).t)
 }

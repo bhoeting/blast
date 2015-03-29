@@ -3,48 +3,84 @@ package blast
 import (
 	"fmt"
 	"strconv"
-	"unicode"
 )
 
 type opType int
 
 const (
-	opTypeAddition opType = iota
+	opTypeEqualTo = iota
+	opTypeAddition
+	opTypeDivision
+	opTypeLessThan
+	opTypeAssignment
+	opTypeGreaterThan
 	opTypeSubtraction
 	opTypeMultiplication
-	opTypeDivision
-	opTypeParen
-	opTypeAssignment
+	opTypeLessThanOrEqualTo
+	opTypeGreaterThanOrEqualTo
 )
 
-type compType int
-
-const (
-	compTypeInt compType = iota
-	compTypeVar
-	compTypeFloat
-	compTypeString
-	compTypeOperator
-)
+type tokenType int
 
 const (
-	parenTypeOpen  = 1
-	parenTypeClose = 2
+	tokenTypeIf = iota
+	tokenTypeInt
+	tokenTypeVar
+	tokenTypeEnd
+	tokenTypeNull
+	tokenTypeComma
+	tokenTypeFloat
+	tokenTypeParen
+	tokenTypeUnkown
+	tokenTypeString
+	tokenTypeOperator
 )
 
+var tokenTypeStrings = map[tokenType]string{
+	tokenTypeIf:       "if",
+	tokenTypeInt:      "int",
+	tokenTypeVar:      "var",
+	tokenTypeEnd:      "end",
+	tokenTypeNull:     "null",
+	tokenTypeComma:    ",",
+	tokenTypeFloat:    "float",
+	tokenTypeParen:    "paren",
+	tokenTypeString:   "string",
+	tokenTypeUnkown:   "unkown",
+	tokenTypeOperator: "operator",
+}
+
+type parenType int
+
 const (
-	tokenTypeNull       = 1
-	tokenTypeOp         = 3
-	tokenTypeChar       = 2
-	tokenTypeParen      = 100
-	tokenTypeQuote      = 4
-	tokenTypeSpace      = 5
-	tokenTypeString     = 6
-	tokenTypeInt        = 7
-	tokenTypeFloat      = 8
-	tokenTypeVar        = 9
-	tokenTypeAssignment = 10
+	parenTypeOpen = iota
+	parenTypeClose
 )
+
+var operatorIdentifiers = map[string]opType{
+	additionIdentifier:           opTypeAddition,
+	equalityIdentifier:           opTypeEqualTo,
+	divisionIdentifier:           opTypeDivision,
+	lessThanIdentifier:           opTypeLessThan,
+	assignmentIdentifier:         opTypeAssignment,
+	greaterThanIdentifier:        opTypeGreaterThan,
+	subtractionIdentifier:        opTypeSubtraction,
+	multiplicationIdentifier:     opTypeMultiplication,
+	lessThanOrEqualIdentifier:    opTypeLessThanOrEqualTo,
+	greaterThanOrEqualIdentifier: opTypeGreaterThanOrEqualTo,
+}
+
+type token struct {
+	data  interface{}
+	start int
+	end   int
+	t     tokenType
+}
+
+type tokenStream struct {
+	tokens []*token
+	size   int
+}
 
 var varToToken = map[varType]int{
 	varTypeString: tokenTypeString,
@@ -52,41 +88,151 @@ var varToToken = map[varType]int{
 	varTypeInt:    tokenTypeInt,
 }
 
-// Token stores data
-// and a token type
-type token struct {
-	data interface{}
-	t    int
+// newTokenFromLexemeStream returns a new token
+// from the lexemes in the lexemeStream
+func newTokenFromLexemeStream(ls *lexemeStream) *token {
+	tType := tokenTypeInt
+	tokenData := ls.string()
+	start, end := ls.start, ls.end
+
+	// If the stream begins and ends with quotes,
+	// return a string token
+	if tokenData[0] == quoteIdentifier[0] &&
+		tokenData[len(tokenData)-1] == quoteIdentifier[0] {
+		return newToken(tokenData[1:len(tokenData)-1], start, end, tokenTypeString)
+	}
+
+	// Check for one-lengthed tokens
+	if ls.size == 1 {
+		switch ls.get(0).t {
+		case lexemeTypeParen:
+			return newParenToken(tokenData, start, end)
+		case lexemeTypeComma:
+			return newBasicToken(start, end, tokenTypeComma)
+		}
+	}
+
+	// Check for reserved words
+	switch tokenData {
+	case ifIdentifier:
+		return newBasicToken(start, end, tokenTypeIf)
+	}
+
+	// Get either a float, int, or var token
+	for _, lex := range ls.lexemes {
+		// If a letter is detected, the token is a var token
+		if lex.t == lexemeTypeLetter {
+			return newToken(tokenData, start, end, tokenTypeVar)
+		}
+
+		if lex.t == lexemeTypeOperator {
+			tType = tokenTypeOperator
+			break
+		}
+
+		// If the token is an int and a decimal is detected, the
+		// token is a float token
+		if lex.t == lexemeTypeDecimalDigit && tType == tokenTypeInt {
+			tType = tokenTypeFloat
+		}
+	}
+
+	switch tType {
+	case tokenTypeInt:
+		return newIntegerToken(tokenData, start, end)
+	case tokenTypeFloat:
+		return newFloatToken(tokenData, start, end)
+	}
+
+	return newOperatorToken(tokenData, start, end)
 }
 
-// tokenStram is a token
-// slice wrapper
-type tokenStream struct {
-	tokens []*token
-	size   int
-	index  int
+// newToken returns a new token
+func newToken(data interface{}, start int, end int, t tokenType) *token {
+	tok := new(token)
+	tok.data = data
+	tok.start = start
+	tok.end = end
+	tok.t = t
+	return tok
 }
 
-// newTokenStream returns a new tokenStream
-func newTokenStream(strTokens string) *tokenStream {
+// newTokenStream creates a tokenStream from a lexemeStream
+func newTokenStream(ls *lexemeStream) *tokenStream {
 	ts := new(tokenStream)
-	ts.tokens = parseTokens(strTokens)
-	ts.size = len(ts.tokens)
-	ts.index = 0
+	tls := new(lexemeStream)
+	tls.start = 0
+	isString := false
+	var lex *lexeme
+	var i int
+
+	addToken := func() {
+		if tls.size > 0 {
+			tls.end = i
+			ts.add(newTokenFromLexemeStream(tls))
+			tls.clear()
+			tls.start = i + 1
+		}
+	}
+
+	for i, lex = range ls.lexemes {
+		if lex.t == lexemeTypeQuote {
+			if !isString && tls.size > 0 {
+				addToken()
+			}
+
+			isString = !isString
+		}
+
+		if isString {
+			tls.push(lex)
+			continue
+		}
+
+		if lex.t == lexemeTypeEOL ||
+			lex.t == lexemeTypeSpace {
+			addToken()
+			continue
+		}
+
+		if lex.t == lexemeTypeComma ||
+			lex.t == lexemeTypeParen {
+			// Add token that was
+			// being built already
+			addToken()
+
+			// Add the actual paren token
+			tls.push(lex)
+			addToken()
+
+			continue
+		}
+
+		if lex.t == lexemeTypeOperator {
+			if tls.top().t == lexemeTypeOperator {
+				tls.push(lex)
+			} else {
+				addToken()
+				tls.push(lex)
+			}
+		} else {
+			if tls.top().t != lexemeTypeOperator {
+				tls.push(lex)
+			} else {
+				addToken()
+				tls.push(lex)
+			}
+		}
+	}
+
+	addToken()
+
 	return ts
 }
 
-// next returns the next item in the stream
-// and a boolean stating if an item was available
-func (ts *tokenStream) next() (*token, bool) {
-	if ts.index > ts.size-1 {
-		return new(token), false
-	}
-
-	tok := ts.curr()
-	ts.index++
-
-	return tok, true
+// get returns the token at the specified index
+func (ts *tokenStream) get(index int) *token {
+	return ts.tokens[index]
 }
 
 // string returns a string representation
@@ -101,222 +247,59 @@ func (ts *tokenStream) string() string {
 	return str
 }
 
-// combine like tokens into a single token,
-// example: a stream of [3, 0, 0] will become [300]
-func (ts *tokenStream) combine() *tokenStream {
-	// The token slice that will replace the current token slice
-	var replacementTokens []*token
-
-	// A slice of tokens that are to be combined
-	var tokensToBeCombined []*token
-
-	// The index of the last token to be combined
-	prevTokensEndIndex := 0
-
-	ts.each(func(token *token, index int) {
-		// If the token is a char or quote, prepare them to be combined
-		if token.t == tokenTypeChar || token.t == tokenTypeQuote {
-			tokensToBeCombined = append(tokensToBeCombined, token)
-		}
-
-		// If (the token is an operator or the end of the slice has been reached or
-		// the token is a closing paren) and the tokensToBeCombined has been added
-		// to since the combining of tokens
-		if (token.t == tokenTypeOp || index == ts.size-1 ||
-			(token.t == tokenTypeParen && token.data == parenTypeClose)) &&
-			len(tokensToBeCombined) != prevTokensEndIndex {
-
-			// Add the combined token to the replacementTokens
-			replacementTokens = append(replacementTokens,
-				combineTokens(tokensToBeCombined[prevTokensEndIndex:]))
-
-			prevTokensEndIndex = len(tokensToBeCombined)
-		}
-
-		// Add operators and parens AFTER any combinations occure
-		if token.t == tokenTypeOp || token.t == tokenTypeParen {
-			replacementTokens = append(replacementTokens, token)
-		}
-	})
-
-	ts.tokens = replacementTokens
-	ts.size = len(replacementTokens) - 1
-
-	return ts
+// add adds a token to the tokenStream
+func (ts *tokenStream) add(token *token) {
+	ts.tokens = append(ts.tokens, token)
+	ts.size++
 }
 
-// combineTokens combines the items in a token
-// slice into one token with a common token type
-func combineTokens(tokens []*token) *token {
-	strCombinedTok := ""
-	isNum, isDecimal, isStr := true, false, false
-
-	// If the first and last tokens are quotes
-	if tokens[0].t == tokenTypeQuote &&
-		tokens[len(tokens)-1].t == tokenTypeQuote {
-		isStr = true
-	}
-
-	for _, t := range tokens {
-		if strTok, ok := t.data.(string); ok {
-			strCombinedTok += strTok
-			if !unicode.IsNumber(rune(strTok[0])) {
-				if strTok != subtractionIdentifier {
-					if strTok != decimalPointIdentifier {
-						isNum = false
-					} else {
-						isDecimal = true
-					}
-				}
-			}
-		}
-	}
-
-	if isStr {
-		return newToken(strCombinedTok, tokenTypeString)
-	}
-
-	if isNum {
-		if isDecimal {
-			f, _ := strconv.ParseFloat(strCombinedTok, 64)
-			return newToken(f, tokenTypeFloat)
-		}
-
-		i, _ := strconv.Atoi(strCombinedTok)
-		return newToken(i, tokenTypeInt)
-	}
-
-	return newToken(strCombinedTok, tokenTypeVar)
+// newBasicToken returns a new token
+// that doesn't have any special data
+func newBasicToken(start int, end int, tType tokenType) *token {
+	return newToken(0, start, end, tType)
 }
 
-// each is a helper method that runs a function
-// on each of the tokens in tokenStream's token slice
-func (ts *tokenStream) each(f func(tok *token, index int)) {
-	for next, ok := ts.next(); ok == true; next, ok = ts.next() {
-		f(next, ts.index-1)
+// newParenToken returns a new paren token
+func newParenToken(text string, start int, end int) *token {
+	if text == openParenIdentifier {
+		return newToken(parenTypeOpen, start, end, tokenTypeParen)
+	} else {
+		return newToken(parenTypeClose, start, end, tokenTypeParen)
 	}
-
-	ts.index = 0
 }
 
-func (ts *tokenStream) curr() *token {
-	return ts.tokens[ts.index]
+// newFloatToken returns a new float token
+func newFloatToken(text string, start int, end int) *token {
+	data, _ := strconv.ParseFloat(text, 64)
+	return newToken(data, start, end, tokenTypeFloat)
 }
 
-func newToken(data interface{}, t int) *token {
-	tok := new(token)
-	tok.data = data
-	tok.t = t
-	return tok
+// newIntegerToken returns a new integer token
+func newIntegerToken(text string, start int, end int) *token {
+	data, _ := strconv.Atoi(text)
+	return newToken(data, start, end, tokenTypeInt)
 }
 
-func parseTokens(code string) []*token {
-	var tokens []*token
-
-	for _, r := range code {
-		tokens = append(tokens, parseToken(string(r)))
-	}
-
-	return tokens
+// newOperatorToken returns a new operator token
+func newOperatorToken(text string, start int, end int) *token {
+	return newToken(operatorIdentifiers[text], start, end, tokenTypeOperator)
 }
 
+// evaluateTokens performs an operation on two tokens
 func evaluateTokens(t1 *token, t2 *token, op *token) *token {
-
-	t2 = evaluateSingleToken(t2, false)
-	if op.opType() != opTypeAssignment {
-		t1 = evaluateSingleToken(t1, true)
-	}
-
-	switch op.opType() {
-	case opTypeAddition:
-		return addTokens(t1, t2)
-	case opTypeSubtraction:
-		return subtractTokens(t1, t2)
-	case opTypeMultiplication:
-		return multiplyTokens(t1, t2)
-	case opTypeDivision:
-		return divideTokens(t1, t2)
-	case opTypeAssignment:
-		return assignTokens(t1, t2)
-	}
 	return tokenNull
-}
-
-func evaluateSingleToken(t *token, shouldDeclare bool) *token {
-	if t.t == tokenTypeVar {
-		v, err := B.getVariable(t.data.(string))
-		if err == nil {
-			t = v.toToken()
-		} else {
-			if shouldDeclare {
-				B.addEmptyVariable(t.data.(string))
-			} else {
-				t = tokenNull
-			}
-		}
-	}
-
-	return t
-}
-
-func parseToken(strToken string) *token {
-	if strToken == spaceIdentifier {
-		return newToken(0, tokenTypeSpace)
-	}
-
-	if strToken == openParenIdentifier {
-		return newToken(parenTypeOpen, tokenTypeParen)
-	}
-
-	if strToken == closeParenIdentifier {
-		return newToken(parenTypeClose, tokenTypeParen)
-	}
-
-	if strToken == quoteIdentifier {
-		return newToken(0, tokenTypeQuote)
-	}
-
-	if opType := parseOperator(strToken); opType != -1 {
-		return newToken(opType, tokenTypeOp)
-	}
-
-	return newToken(strToken, tokenTypeChar)
-}
-
-func parseOperator(strToken string) opType {
-	switch strToken {
-	case additionIdentifier:
-		return opTypeAddition
-	case subtractionIdentifier:
-		return opTypeSubtraction
-	case multiplicationIdentifier:
-		return opTypeMultiplication
-	case divisionIdentifier:
-		return opTypeDivision
-	case assignmentIdentifier:
-		return opTypeAssignment
-	default:
-		return -1
-	}
 }
 
 func (t *token) string() string {
 	switch t.t {
-	case tokenTypeQuote:
-		return fmt.Sprintf("%v", "\"")
-	case tokenTypeSpace:
-		return fmt.Sprintf("%v", " ")
-	case tokenTypeOp:
-		switch t.data.(opType) {
-		case opTypeAddition:
-			return fmt.Sprint("+")
-		case opTypeMultiplication:
-			return fmt.Sprint("*")
-		case opTypeDivision:
-			return fmt.Sprint("/")
-		case opTypeSubtraction:
-			return fmt.Sprint("-")
+	case tokenTypeOperator:
+		for opIdentifier, oType := range operatorIdentifiers {
+			if oType == t.data.(opType) {
+				return fmt.Sprintf("%v", opIdentifier)
+			}
 		}
+
+		return fmt.Sprintf("%v", "Optype uknown")
 	case tokenTypeParen:
 		if t.data.(int) == parenTypeClose {
 			return fmt.Sprint(")")

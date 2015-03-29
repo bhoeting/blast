@@ -5,7 +5,7 @@ import "errors"
 var (
 	errQueueIsEmpty = errors.New("Queue is empty")
 	errStackIsEmpty = errors.New("Stack is empty")
-	tokenNull       = &token{nil, tokenTypeNull}
+	tokenNull       = &token{nil, 0, 0, tokenTypeNull}
 )
 
 // stack is a basic

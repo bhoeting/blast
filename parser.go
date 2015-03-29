@@ -24,7 +24,8 @@ func (input *tokenStream) evaluate() *token {
 		}
 	}
 
-	return evaluateSingleToken(s.pop(), false)
+	// return evaluateSingleToken(s.pop(), false)
+	return s.pop()
 }
 
 // toRPN converts a group of tokens
@@ -93,7 +94,7 @@ func isValue(token *token) bool {
 // isOp determines if the token
 // is an operator
 func isOp(token *token) bool {
-	return token.t == tokenTypeOp
+	return token.t == tokenTypeOperator
 }
 
 // isParen determines if the token is a paren
