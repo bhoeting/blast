@@ -119,6 +119,10 @@ func newTokenFromLexemeStream(ls *lexemeStream) *token {
 	switch tokenData {
 	case ifIdentifier:
 		return newBasicToken(start, end, tokenTypeIf)
+	case endIdentifier:
+		return newBasicToken(start, end, tokenTypeEnd)
+	case trueIdentifier, falseIdentifier:
+		return newBooleanToken(tokenData, start, end)
 	}
 
 	// Get either a float, int, or var token
@@ -366,8 +370,10 @@ func (t *token) string() string {
 		return fmt.Sprint("(")
 	case tokenTypeString:
 		return fmt.Sprintf("\"%v\"", t.data)
-	default:
-		return fmt.Sprintf("%v", t.data)
+	case tokenTypeIf:
+		return fmt.Sprintf("%v", ifIdentifier)
+	case tokenTypeEnd:
+		return fmt.Sprintf("%v", endIdentifier)
 	}
 
 	return fmt.Sprintf("%v", t.data)

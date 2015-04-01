@@ -62,12 +62,17 @@ func Init() {
 	B = NewBlast()
 }
 
-// Parse turns a string of code into
-// language components
+// Parse parses code
 func Parse(code string) string {
-	ls := newLexemeStream(code)
-	ts := newTokenStream(ls).toRPN().evaluate()
-	return ts.string()
+	return ParseBasicLine(code)
+}
+
+// ParseBasicLine turns a line of code into
+// language components
+func ParseBasicLine(line string) string {
+	ls := newLexemeStream(line)
+	ts := newTokenStream(ls)
+	return ts.parse().string()
 }
 
 // addEmptyVariable adds an empty variable to

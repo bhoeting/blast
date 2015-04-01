@@ -8,8 +8,16 @@ var precedenceMap = map[opType]int{
 	opTypeMultiplication: 2,
 }
 
+func (ts *tokenStream) parse() *token {
+	switch ts.get(0).t {
+	default:
+		return ts.evaluate()
+	}
+}
+
 // evaluate evaluates a token stream into one token
 func (input *tokenStream) evaluate() *token {
+	input.toRPN()
 	s := newStack()
 
 	for _, t := range input.tokens {

@@ -25,7 +25,7 @@ func CLI() {
 			os.Exit(1)
 		}
 
-		fmt.Println(Parse(input[:len(input)-1]))
+		fmt.Println(ParseBasicLine(input[:len(input)-1]))
 	}
 }
 

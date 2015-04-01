@@ -19,4 +19,5 @@ const (
 	greaterThanOrEqualIdentifier = ">="
 	trueIdentifier               = "true"
 	falseIdentifier              = "false"
+	endIdentifier                = "end"
 )

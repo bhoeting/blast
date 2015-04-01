@@ -10,6 +10,7 @@ type lexemeType int
 const (
 	lexemeTypeEOL = iota
 	lexemeTypeNum
+	lexemeTypeTab
 	lexemeTypeComma
 	lexemeTypeSpace
 	lexemeTypeParen
@@ -23,6 +24,7 @@ const (
 var lexemeIdentifiers = map[lexemeType]string{
 	lexemeTypeEOL:          "\n",
 	lexemeTypeNum:          "0123456789",
+	lexemeTypeTab:          "\t",
 	lexemeTypeParen:        "()",
 	lexemeTypeComma:        ",",
 	lexemeTypeQuote:        "\"",
@@ -86,10 +88,11 @@ func newLexeme(text rune, pos int) *lexeme {
 func newLexemeStream(input string) *lexemeStream {
 	ls := new(lexemeStream)
 	ls.size = len(input)
-	ls.lexemes = make([]*lexeme, ls.size)
 
 	for i, r := range input {
-		ls.lexemes[i] = newLexeme(r, i)
+		if lex := newLexeme(r, i); lex.t != lexemeTypeTab {
+			ls.lexemes = append(ls.lexemes, lex)
+		}
 	}
 
 	return ls
