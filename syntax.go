@@ -20,4 +20,5 @@ const (
 	trueIdentifier               = "true"
 	falseIdentifier              = "false"
 	endIdentifier                = "end"
+	functionIdentifier           = "function"
 )

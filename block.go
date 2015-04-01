@@ -6,15 +6,17 @@ type lineType int
 
 const (
 	lineTypeUnkown = iota
-	lineTypeIf     // ex: If, for, while
-	lineTypeBasic  // ex: 2 + 2, x = 3
-	lineTypeEnder  // ex: end
+	lineTypeIf
+	lineTypeFunction
+	lineTypeBasic
+	lineTypeEnder
 )
 
 type blockType int
 
 const (
 	blockTypeBasic = iota
+	blockTypeFunction
 	blockTypeIf
 )
 
@@ -28,7 +30,8 @@ type block struct {
 }
 
 var lineToBlock = map[lineType]blockType{
-	lineTypeIf: blockTypeIf,
+	lineTypeIf:       blockTypeIf,
+	lineTypeFunction: blockTypeFunction,
 }
 
 type line struct {
@@ -135,6 +138,8 @@ func newLine(strCode string) *line {
 	switch ts.get(0).t {
 	case tokenTypeIf:
 		return &line{ts, lineTypeIf}
+	case tokenFunction:
+		return &line{ts, lineTypeFunction}
 	case tokenTypeEnd:
 		return &line{ts, lineTypeEnder}
 	}

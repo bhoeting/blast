@@ -26,7 +26,8 @@ var B *Blast
 // the stores basic
 // language components
 type Blast struct {
-	vars map[string]*variable
+	vars  map[string]*variable
+	funcs map[string]*function
 }
 
 // variable is a struct that
@@ -44,9 +45,21 @@ type variableNotDeclaredError struct {
 	vName string
 }
 
+// functionNotFound is an error thrown
+// when a function is accessed but
+// has not been instantiated
+type functionNotFoundError struct {
+	fName string
+}
+
 // Error returns a string with an error message
 func (err *variableNotDeclaredError) Error() string {
 	return fmt.Sprintf("Variable %v not declared.", err.vName)
+}
+
+// Error returns a string with an error message
+func (err *functionNotFoundError) Error() string {
+	return fmt.Sprintf("Variable %v not declared.", err.fName)
 }
 
 // NewBlast returns a new Blast struct
@@ -110,6 +123,21 @@ func (b *Blast) removeVariable(name string) *Blast {
 func (b *Blast) setVariable(name string, data interface{}) *variable {
 	b.vars[name] = newVariable(name, data)
 	return b.vars[name]
+}
+
+// addFunction adds a function to the funcs map
+func (b *Blast) addFunction(name string, f *function) *function {
+	b.funcs[name] = f
+	return f
+}
+
+// getFunction gets a function
+func (b *Blast) getFunction(name string) *function {
+	if f, ok := b.funcs[name]; ok {
+		return f, nil
+	}
+
+	return new(function), &functionNotFoundError{name}
 }
 
 // string returns a string representation

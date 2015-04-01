@@ -36,6 +36,7 @@ const (
 	tokenTypeString
 	tokenTypeBoolean
 	tokenTypeOperator
+	tokenTypeFunction
 )
 
 var tokenTypeStrings = map[tokenType]string{
@@ -51,6 +52,7 @@ var tokenTypeStrings = map[tokenType]string{
 	tokenTypeUnkown:   "unkown",
 	tokenTypeBoolean:  "boolean",
 	tokenTypeOperator: "operator",
+	tokenTypeFunction: "function",
 }
 
 type parenType int
@@ -119,6 +121,8 @@ func newTokenFromLexemeStream(ls *lexemeStream) *token {
 	switch tokenData {
 	case ifIdentifier:
 		return newBasicToken(start, end, tokenTypeIf)
+	case functionIdentifier:
+		return newBasicToken(start, end, tokenTypeFunction)
 	case endIdentifier:
 		return newBasicToken(start, end, tokenTypeEnd)
 	case trueIdentifier, falseIdentifier:
@@ -258,6 +262,13 @@ func (ts *tokenStream) string() string {
 func (ts *tokenStream) add(token *token) {
 	ts.tokens = append(ts.tokens, token)
 	ts.size++
+}
+
+// clear removes the tokens from
+// a tokenStream
+func (ts *tokenStream) clear() *ts {
+	ts.tokens = nil
+	ts.size = 0
 }
 
 // newBasicToken returns a new token
