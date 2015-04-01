@@ -32,7 +32,7 @@ func TestVariableMethods(t *testing.T) {
 
 func TestVariableDeclaration(t *testing.T) {
 	Init()
-	Parse("x = 3")
+	ParseBasicLine("x = 3")
 	v, err := B.getVariable("x")
 
 	if err != nil {
@@ -41,7 +41,7 @@ func TestVariableDeclaration(t *testing.T) {
 
 	assert.Equal(t, 3, v.integer())
 
-	Parse("y=3000+3")
+	ParseBasicLine("y=3000+3")
 	v, err = B.getVariable("y")
 
 	if err != nil {
@@ -50,7 +50,7 @@ func TestVariableDeclaration(t *testing.T) {
 
 	assert.Equal(t, 3003, v.integer())
 
-	Parse("y=300+\"string\"")
+	ParseBasicLine("y=300+\"string\"")
 	v, err = B.getVariable("y")
 
 	if err != nil {
@@ -62,13 +62,13 @@ func TestVariableDeclaration(t *testing.T) {
 
 func TestVariableUsage(t *testing.T) {
 	Init()
-	Parse("n=3")
-	Parse("x=4")
-	Parse("s=\"string\"")
+	ParseBasicLine("n=3")
+	ParseBasicLine("x=4")
+	ParseBasicLine("s=\"string\"")
 
-	assert.Equal(t, "3", Parse("n"))
-	assert.Equal(t, "5", Parse("2+n"))
-	assert.Equal(t, "100", Parse("n=n+97"))
-	assert.Equal(t, "\"100string\"", Parse("n+s"))
-	assert.Equal(t, "\"stringstringstringstring\"", Parse("x*s"))
+	assert.Equal(t, "3", ParseBasicLine("n"))
+	assert.Equal(t, "5", ParseBasicLine("2+n"))
+	assert.Equal(t, "100", ParseBasicLine("n=n+97"))
+	assert.Equal(t, "\"100string\"", ParseBasicLine("n+s"))
+	assert.Equal(t, "\"stringstringstringstring\"", ParseBasicLine("x*s"))
 }

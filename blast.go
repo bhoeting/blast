@@ -63,8 +63,8 @@ func Init() {
 }
 
 // Parse parses code
-func Parse(code string) string {
-	return ParseBasicLine(code)
+func Parse(strCode string) {
+	newCode(strCode).run()
 }
 
 // ParseBasicLine turns a line of code into

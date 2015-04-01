@@ -9,10 +9,7 @@ var precedenceMap = map[opType]int{
 }
 
 func (ts *tokenStream) parse() *token {
-	switch ts.get(0).t {
-	default:
-		return ts.evaluate()
-	}
+	return ts.toRPN().evaluate()
 }
 
 // evaluate evaluates a token stream into one token

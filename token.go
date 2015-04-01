@@ -406,3 +406,7 @@ func (t *token) number() float64 {
 
 	return t.data.(float64)
 }
+
+func (t *token) boolean() bool {
+	return t.data.(bool)
+}

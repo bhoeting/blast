@@ -3,11 +3,29 @@ package blast
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 )
+
+func Run(fName string) {
+	if !strings.HasSuffix(fName, ".blast") {
+		fName += ".blast"
+	}
+
+	data, err := ioutil.ReadFile(fName)
+
+	if err != nil {
+		log.Fatalf("Could not read file %v")
+	}
+
+	Init()
+	Parse(string(data))
+}
 
 // CLI runs the command
 // line interface for the
