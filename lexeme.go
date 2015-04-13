@@ -15,7 +15,7 @@ const (
 	lexemeTypeSpace
 	lexemeTypeParen
 	lexemeTypeQuote
-	lexemeTypeLetter
+	lexemeTypeCharacter
 	lexemeTypeOperator
 	lexemeTypeDecimalDigit
 	lexemeTypeUnidentified
@@ -29,8 +29,8 @@ var lexemeIdentifiers = map[lexemeType]string{
 	lexemeTypeComma:        ",",
 	lexemeTypeQuote:        "\"",
 	lexemeTypeSpace:        " ",
-	lexemeTypeLetter:       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-	lexemeTypeOperator:     "+-<>*/=&",
+	lexemeTypeCharacter:    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	lexemeTypeOperator:     "+-<>*/=&|",
 	lexemeTypeDecimalDigit: ".",
 }
 
@@ -46,7 +46,7 @@ type lexemeIdentificationError struct {
 // about a lexemeIdentificationError
 func (l *lexemeIdentificationError) Error() string {
 	return fmt.Sprintf(
-		"Could not identify item \"%v\" at position %v", l.text, l.pos,
+		"Could not identify item \"%v\" at position %v", string(l.text), l.pos,
 	)
 }
 
@@ -70,37 +70,38 @@ type lexemeStream struct {
 }
 
 // newLexeme returns a new lexeme
-func newLexeme(text rune, pos int) *lexeme {
-	var err error
-	isInQuotes := false
-	l := new(lexeme)
-	l.text = text
-	l.pos = pos
-	l.t, err = getLexemeType(l)
-
-	if l.t == lexemeTypeQuote {
-		isInQuotes = !isInQuotes
-	}
-
-	if err != nil {
-		if isInQuotes {
-			l.t = lexemeTypeLetter
-		} else {
-			log.Fatal(err.Error())
-		}
-	}
-
-	return l
+func newLexeme(rLexeme rune, pos int, t lexemeType) *lexeme {
+	lexeme := new(lexeme)
+	lexeme.pos = pos
+	lexeme.text = rLexeme
+	lexeme.t = t
+	return lexeme
 }
 
 // newLexemeStream returns a new lexemeStream
-func newLexemeStream(input string) *lexemeStream {
+func newLexemeStream(strLexemes string) *lexemeStream {
 	ls := new(lexemeStream)
-	ls.size = len(input)
+	isInQuotes := false
+	var lexType lexemeType
+	var err error
 
-	for i, r := range input {
-		if lex := newLexeme(r, i); lex.t != lexemeTypeTab {
-			ls.lexemes = append(ls.lexemes, lex)
+	for pos, rLexeme := range strLexemes {
+		lexType, err = getLexemeType(rLexeme, pos)
+		if lexType == lexemeTypeQuote {
+			isInQuotes = !isInQuotes
+		}
+
+		// If an unknown character
+		// appears in quotes, we
+		// can ignore it
+		if err != nil {
+			if isInQuotes {
+				ls.push(newLexeme(rLexeme, pos, lexemeTypeCharacter))
+			} else {
+				log.Fatal(err.Error())
+			}
+		} else {
+			ls.push(newLexeme(rLexeme, pos, lexType))
 		}
 	}
 
@@ -109,16 +110,16 @@ func newLexemeStream(input string) *lexemeStream {
 
 // getLexemeType returns a lexeme type and an error
 // if the lexeme did not match any type
-func getLexemeType(l *lexeme) (lexemeType, error) {
+func getLexemeType(rLexeme rune, pos int) (lexemeType, error) {
 	for lType, identifiers := range lexemeIdentifiers {
 		for _, identifier := range identifiers {
-			if identifier == l.text {
+			if identifier == rLexeme {
 				return lType, nil
 			}
 		}
 	}
 
-	return lexemeTypeUnidentified, &lexemeIdentificationError{l.pos, l.text}
+	return lexemeTypeUnidentified, &lexemeIdentificationError{pos, rLexeme}
 }
 
 // get returns the lexeme at the specified index
