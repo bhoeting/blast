@@ -21,4 +21,7 @@ const (
 	falseIdentifier              = "false"
 	endIdentifier                = "end"
 	functionIdentifier           = "function"
+	returnIdentifier             = "return"
+	commentIdentifier            = "--"
+	andIdentifier                = "&&"
 )

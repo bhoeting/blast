@@ -30,7 +30,7 @@ var lexemeIdentifiers = map[lexemeType]string{
 	lexemeTypeQuote:        "\"",
 	lexemeTypeSpace:        " ",
 	lexemeTypeLetter:       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-	lexemeTypeOperator:     "+-<>*/=",
+	lexemeTypeOperator:     "+-<>*/=&",
 	lexemeTypeDecimalDigit: ".",
 }
 
@@ -72,13 +72,22 @@ type lexemeStream struct {
 // newLexeme returns a new lexeme
 func newLexeme(text rune, pos int) *lexeme {
 	var err error
+	isInQuotes := false
 	l := new(lexeme)
 	l.text = text
 	l.pos = pos
 	l.t, err = getLexemeType(l)
 
+	if l.t == lexemeTypeQuote {
+		isInQuotes = !isInQuotes
+	}
+
 	if err != nil {
-		log.Fatal(err.Error())
+		if isInQuotes {
+			l.t = lexemeTypeLetter
+		} else {
+			log.Fatal(err.Error())
+		}
 	}
 
 	return l

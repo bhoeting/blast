@@ -1,9 +1,6 @@
 package blast
 
-import (
-	"errors"
-	"fmt"
-)
+import "fmt"
 
 type varType int
 
@@ -11,11 +8,8 @@ const (
 	varTypeInt = iota
 	varTypeString
 	varTypeFloat
+	varTypeBoolean
 	varTypeEmpty
-)
-
-var (
-	errVarNotFound = errors.New("Variable not declared.")
 )
 
 // B is the global
@@ -27,7 +21,7 @@ var B *Blast
 // language components
 type Blast struct {
 	vars  map[string]*variable
-	funcs map[string]*function
+	funcs map[string]function
 }
 
 // variable is a struct that
@@ -59,13 +53,15 @@ func (err *variableNotDeclaredError) Error() string {
 
 // Error returns a string with an error message
 func (err *functionNotFoundError) Error() string {
-	return fmt.Sprintf("Variable %v not declared.", err.fName)
+	return fmt.Sprintf("Function %v not found.", err.fName)
 }
 
 // NewBlast returns a new Blast struct
 func NewBlast() *Blast {
 	b := new(Blast)
-	b.vars = make(map[string]*variable, 0)
+	b.vars = make(map[string]*variable)
+	b.funcs = make(map[string]function)
+	b.importBuiltinFuncs()
 	return b
 }
 
@@ -77,7 +73,7 @@ func Init() {
 
 // Parse parses code
 func Parse(strCode string) {
-	newCode(strCode).run()
+	newLines(strCode).run()
 }
 
 // ParseBasicLine turns a line of code into
@@ -126,18 +122,18 @@ func (b *Blast) setVariable(name string, data interface{}) *variable {
 }
 
 // addFunction adds a function to the funcs map
-func (b *Blast) addFunction(name string, f *function) *function {
+func (b *Blast) addFunction(name string, f function) function {
 	b.funcs[name] = f
 	return f
 }
 
 // getFunction gets a function
-func (b *Blast) getFunction(name string) *function {
+func (b *Blast) getFunction(name string) (function, error) {
 	if f, ok := b.funcs[name]; ok {
 		return f, nil
 	}
 
-	return new(function), &functionNotFoundError{name}
+	return nil, &functionNotFoundError{name}
 }
 
 // string returns a string representation
@@ -149,9 +145,13 @@ func (b *Blast) string() string {
 		str += fmt.Sprintf("\t%v: %v\n", name, v.string())
 	}
 
-	str += "}"
+	str += "}\n\nfunctions: {\n"
 
-	return str
+	for name, _ := range b.funcs {
+		str += fmt.Sprintf("\t%v\n", name)
+	}
+
+	return str + "}"
 }
 
 // newVariable returns a new variable
@@ -167,6 +167,8 @@ func newVariable(name string, data interface{}) *variable {
 		v.t = varTypeFloat
 	case string:
 		v.t = varTypeString
+	case bool:
+		v.t = varTypeBoolean
 	default:
 		v.t = varTypeString
 	}

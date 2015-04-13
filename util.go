@@ -63,6 +63,28 @@ func (s *stack) top() *token {
 	return tokenNull
 }
 
+// bottom returns the first
+// item in the stack
+func (s *stack) bottom() *token {
+	if s.count > 0 {
+		return s.items[0]
+	}
+
+	return tokenNull
+}
+
+// toTokenStream returns a tokenStream
+// from the stack
+func (s *stack) toTokenStream() *tokenStream {
+	ts := new(tokenStream)
+
+	for i := 0; i < s.count; i++ {
+		ts.add(s.items[i])
+	}
+
+	return ts
+}
+
 // size returns the stack's stize
 func (s *stack) size() int {
 	return s.count

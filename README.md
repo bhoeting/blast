@@ -1,38 +1,22 @@
-# blast
-A "programming language" written in Go.  This project was made for fun, experimental purposes, and the ability to say "I wrote a programming language".  I don't actually know how to write a programming language, so this project doesn't reflect how I actually write code.
+The MIT License (MIT)
 
-## Usage
-`go get github.com/bhoeting/blast`
+Copyright (c) 2015 Brennan Hoeting
 
-```go
-package main
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-import (
-	"github.com/bhoeting/blast"
-)
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-func main() {
-	blast.CLI()
-}
-```
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-```
->4+5
-9
->4-5
--1
->4*5
-20
->4/5  
-0
->4.0/5
-0.8
->4*"string"
-"stringstringstringstring"
->4*"string"+5
-"stringstringstringstring5"
->5+5*"string"
-"5stringstringstringstringstring"
->(5+5)*"string"
-"stringstringstringstringstringstringstringstringstringstring"
-```

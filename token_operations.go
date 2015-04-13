@@ -8,19 +8,33 @@ import (
 func compareTokens(t1 *token, t2 *token, opType opType) *token {
 	var result bool
 
-	switch opType {
-	case opTypeEqualTo:
-		result = t1.number() == t2.number()
-	case opTypeLessThan:
-		result = t1.number() < t2.number()
-	case opTypeGreaterThan:
-		result = t1.number() > t2.number()
-	case opTypeLessThanOrEqualTo:
-		result = t1.number() <= t2.number()
-	case opTypeGreaterThanOrEqualTo:
-		result = t1.number() >= t2.number()
-	default:
-		result = true
+	if t1.t == tokenTypeString {
+		if t2.t == tokenTypeString {
+			result = t1.str() == t2.str()
+		} else {
+			result = false
+		}
+	} else {
+		if t2.t == tokenTypeString {
+			result = false
+		} else {
+			switch opType {
+			case opTypeAnd:
+				result = t1.boolean() && t2.boolean()
+			case opTypeEqualTo:
+				result = t1.number() == t2.number()
+			case opTypeLessThan:
+				result = t1.number() < t2.number()
+			case opTypeGreaterThan:
+				result = t1.number() > t2.number()
+			case opTypeLessThanOrEqualTo:
+				result = t1.number() <= t2.number()
+			case opTypeGreaterThanOrEqualTo:
+				result = t1.number() >= t2.number()
+			default:
+				result = true
+			}
+		}
 	}
 
 	return newToken(result, 0, 0, tokenTypeBoolean)
@@ -32,7 +46,7 @@ func assignTokens(t1 *token, t2 *token) *token {
 		return v.toToken()
 	}
 
-	log.Fatalf("%v", "Left token must be a variable")
+	log.Fatalf("Left token must be a variable, got %v", t1.string())
 	return tokenNull
 }
 

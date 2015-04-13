@@ -36,8 +36,6 @@ func TestTokenStream(t *testing.T) {
 	ls = newLexemeStream("50 + (4 * 30.6)")
 	ts = newTokenStream(ls)
 
-	t.Log(ts.string())
-
 	assert.Equal(t, tokenTypeInt, ts.get(0).t)
 	assert.Equal(t, tokenTypeOperator, ts.get(1).t)
 	assert.Equal(t, tokenTypeParen, ts.get(2).t)
@@ -45,4 +43,12 @@ func TestTokenStream(t *testing.T) {
 	assert.Equal(t, tokenTypeOperator, ts.get(4).t)
 	assert.Equal(t, tokenTypeFloat, ts.get(5).t)
 	assert.Equal(t, tokenTypeParen, ts.get(6).t)
+
+	ls = newLexemeStream("function test(x = 0)")
+	ts = newTokenStream(ls)
+	B.addFunction("test", parseUserFunction(ts))
+
+	ls = newLexemeStream("1 + test(2)")
+	ts = newTokenStream(ls)
+	assert.Equal(t, tokenTypeFunctionCall, ts.get(2).t)
 }

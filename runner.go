@@ -20,7 +20,7 @@ func Run(fName string) {
 	data, err := ioutil.ReadFile(fName)
 
 	if err != nil {
-		log.Fatalf("Could not read file %v")
+		log.Fatalf("Could not read file %v", fName)
 	}
 
 	Init()

@@ -11,7 +11,7 @@ func TestVariableMethods(t *testing.T) {
 	b.addVariable(newVariable("x", 200))
 
 	v, err := b.getVariable("x")
-	if err == errVarNotFound {
+	if err != nil {
 		t.Fatal(err.Error())
 	}
 	assert.Equal(t, 200, v.integer())

@@ -9,7 +9,8 @@ import (
 type opType int
 
 const (
-	opTypeEqualTo = iota
+	opTypeAnd = iota
+	opTypeEqualTo
 	opTypeAddition
 	opTypeDivision
 	opTypeLessThan
@@ -34,25 +35,29 @@ const (
 	tokenTypeParen
 	tokenTypeUnkown
 	tokenTypeString
+	tokenTypeReturn
 	tokenTypeBoolean
 	tokenTypeOperator
 	tokenTypeFunction
+	tokenTypeFunctionCall
 )
 
 var tokenTypeStrings = map[tokenType]string{
-	tokenTypeIf:       "if",
-	tokenTypeInt:      "int",
-	tokenTypeVar:      "var",
-	tokenTypeEnd:      "end",
-	tokenTypeNull:     "null",
-	tokenTypeComma:    ",",
-	tokenTypeFloat:    "float",
-	tokenTypeParen:    "paren",
-	tokenTypeString:   "string",
-	tokenTypeUnkown:   "unkown",
-	tokenTypeBoolean:  "boolean",
-	tokenTypeOperator: "operator",
-	tokenTypeFunction: "function",
+	tokenTypeIf:           "if",
+	tokenTypeInt:          "int",
+	tokenTypeVar:          "var",
+	tokenTypeEnd:          "end",
+	tokenTypeNull:         "null",
+	tokenTypeComma:        ",",
+	tokenTypeFloat:        "float",
+	tokenTypeParen:        "paren",
+	tokenTypeString:       "string",
+	tokenTypeUnkown:       "unkown",
+	tokenTypeReturn:       "return",
+	tokenTypeBoolean:      "boolean",
+	tokenTypeOperator:     "operator",
+	tokenTypeFunction:     "function",
+	tokenTypeFunctionCall: "function_call",
 }
 
 type parenType int
@@ -63,8 +68,9 @@ const (
 )
 
 var operatorIdentifiers = map[string]opType{
-	additionIdentifier:           opTypeAddition,
+	andIdentifier:                opTypeAnd,
 	equalityIdentifier:           opTypeEqualTo,
+	additionIdentifier:           opTypeAddition,
 	divisionIdentifier:           opTypeDivision,
 	lessThanIdentifier:           opTypeLessThan,
 	assignmentIdentifier:         opTypeAssignment,
@@ -85,12 +91,14 @@ type token struct {
 type tokenStream struct {
 	tokens []*token
 	size   int
+	isRPN  bool
 }
 
 var varToToken = map[varType]tokenType{
-	varTypeString: tokenTypeString,
-	varTypeFloat:  tokenTypeFloat,
-	varTypeInt:    tokenTypeInt,
+	varTypeString:  tokenTypeString,
+	varTypeFloat:   tokenTypeFloat,
+	varTypeInt:     tokenTypeInt,
+	varTypeBoolean: tokenTypeBoolean,
 }
 
 // newTokenFromLexemeStream returns a new token
@@ -127,12 +135,22 @@ func newTokenFromLexemeStream(ls *lexemeStream) *token {
 		return newBasicToken(start, end, tokenTypeEnd)
 	case trueIdentifier, falseIdentifier:
 		return newBooleanToken(tokenData, start, end)
+	case returnIdentifier:
+		return newBasicToken(start, end, tokenTypeReturn)
 	}
 
 	// Get either a float, int, or var token
 	for _, lex := range ls.lexemes {
 		// If a letter is detected, the token is a var token
 		if lex.t == lexemeTypeLetter {
+			if _, err := B.getVariable(tokenData); err == nil {
+				return newToken(tokenData, start, end, tokenTypeVar)
+			}
+
+			if _, err := B.getFunction(tokenData); err == nil {
+				return newToken(tokenData, start, end, tokenTypeFunctionCall)
+			}
+
 			return newToken(tokenData, start, end, tokenTypeVar)
 		}
 
@@ -171,17 +189,30 @@ func newToken(data interface{}, start int, end int, t tokenType) *token {
 // newTokenStream creates a tokenStream from a lexemeStream
 func newTokenStream(ls *lexemeStream) *tokenStream {
 	ts := new(tokenStream)
+	ts.isRPN = false
 	tls := new(lexemeStream)
 	tls.start = 0
 	isString := false
+	unkownIndex := -1
 	var lex *lexeme
 	var i int
 
 	addToken := func() {
 		if tls.size > 0 {
-			tls.end = i
-			ts.add(newTokenFromLexemeStream(tls))
+			newTok := newTokenFromLexemeStream(tls)
+			ts.add(newTok)
+
+			// If a token is unkown, it is either
+			// a variable or a function identifier.
+			// We will store the index of this token
+			// to determine if it is a function when
+			// we have more information
+			if newTok.t == tokenTypeUnkown {
+				unkownIndex = ts.size - 1
+			}
+
 			tls.clear()
+			tls.end = i
 			tls.start = i + 1
 		}
 	}
@@ -208,9 +239,17 @@ func newTokenStream(ls *lexemeStream) *tokenStream {
 
 		if lex.t == lexemeTypeComma ||
 			lex.t == lexemeTypeParen {
+
 			// Add token that was
 			// being built already
 			addToken()
+
+			// If an open paren is detected, then we know
+			// the unknown token must be a function call
+			if unkownIndex != -1 && lex.text == '(' {
+				ts.tokens[unkownIndex].t = tokenTypeFunctionCall
+				unkownIndex = -1
+			}
 
 			// Add the actual paren token
 			tls.push(lex)
@@ -220,6 +259,7 @@ func newTokenStream(ls *lexemeStream) *tokenStream {
 		}
 
 		if lex.t == lexemeTypeOperator {
+			unkownIndex = -1
 			if tls.top().t == lexemeTypeOperator {
 				tls.push(lex)
 			} else {
@@ -252,7 +292,7 @@ func (ts *tokenStream) string() string {
 	str := ""
 
 	for _, t := range ts.tokens {
-		str += t.string() + ","
+		str += t.string() + "`"
 	}
 
 	return str
@@ -266,9 +306,16 @@ func (ts *tokenStream) add(token *token) {
 
 // clear removes the tokens from
 // a tokenStream
-func (ts *tokenStream) clear() *ts {
+func (ts *tokenStream) clear() *tokenStream {
 	ts.tokens = nil
 	ts.size = 0
+
+	return ts
+}
+
+// prepend inserts a token at the from of the stream
+func (ts *tokenStream) prepend(t *token) {
+	ts.tokens = append([]*token{t}, ts.tokens...)
 }
 
 // newBasicToken returns a new token
@@ -316,6 +363,10 @@ func newBooleanToken(text string, start int, end int) *token {
 
 // evaluateToken evalutes a single token
 func evaluateToken(t *token) *token {
+	if t.t == tokenTypeUnkown {
+		t = resolveUnknownToken(t)
+	}
+
 	if t.t == tokenTypeVar {
 		return getTokenFromVariableToken(t)
 	}
@@ -325,9 +376,12 @@ func evaluateToken(t *token) *token {
 
 // evaluateTokens performs an operation on two tokens
 func evaluateTokens(t1 *token, t2 *token, op *token) *token {
-
 	if op.opType() != opTypeAssignment {
 		t1 = evaluateToken(t1)
+	} else {
+		if t1.t == tokenTypeUnkown {
+			t1 = resolveUnknownToken(t1)
+		}
 	}
 
 	t2 = evaluateToken(t2)
@@ -342,12 +396,30 @@ func evaluateTokens(t1 *token, t2 *token, op *token) *token {
 	case opTypeDivision:
 		return divideTokens(t1, t2)
 	case opTypeAssignment:
+		t1.t = tokenTypeVar
 		return assignTokens(t1, t2)
 	default:
 		return compareTokens(t1, t2, op.opType())
 	}
 
 	return tokenNull
+}
+
+// resolveUnkownToken determines if the
+// unknown token is a variable or function
+// call based on the declared functions
+func resolveUnknownToken(t *token) *token {
+	_, err := B.getFunction(t.data.(string))
+
+	// If a function was not found
+	// the token is a variable
+	if err != nil {
+		t.t = tokenTypeFunctionCall
+	} else {
+		t.t = tokenTypeVar
+	}
+
+	return t
 }
 
 // getTokenFromVariableToken returns a new token
@@ -385,6 +457,14 @@ func (t *token) string() string {
 		return fmt.Sprintf("%v", ifIdentifier)
 	case tokenTypeEnd:
 		return fmt.Sprintf("%v", endIdentifier)
+	case tokenTypeFunction:
+		return fmt.Sprintf("%v", functionIdentifier)
+	case tokenTypeReturn:
+		return fmt.Sprintf("%v", returnIdentifier)
+	case tokenTypeComma:
+		return fmt.Sprintf("%v", ",")
+	case tokenTypeFunctionCall:
+		return fmt.Sprintf("%v()", t.data)
 	}
 
 	return fmt.Sprintf("%v", t.data)
@@ -413,6 +493,13 @@ func (t *token) parenType() int {
 func (t *token) number() float64 {
 	if n, ok := t.data.(int); ok {
 		return float64(n)
+	}
+
+	if n, ok := t.data.(bool); ok {
+		if n {
+			return 1
+		}
+		return 0
 	}
 
 	return t.data.(float64)
