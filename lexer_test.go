@@ -53,6 +53,15 @@ func TestLexerItemText(t *testing.T) {
 	assert.Equal(t, "314.9", lexer.NextItem().text)
 	assert.Equal(t, "+", lexer.NextItem().text)
 	assert.Equal(t, "str()_=182ing", lexer.NextItem().text)
+
+	lexer = NewLexer("if x == 1 + 100")
+	lexer.Lex()
+	assert.Equal(t, "if", lexer.NextItem().text)
+	assert.Equal(t, "x", lexer.NextItem().text)
+	assert.Equal(t, "==", lexer.NextItem().text)
+	assert.Equal(t, "1", lexer.NextItem().text)
+	assert.Equal(t, "+", lexer.NextItem().text)
+	assert.Equal(t, "100", lexer.NextItem().text)
 }
 
 func TestLexerItemType(t *testing.T) {

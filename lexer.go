@@ -324,6 +324,22 @@ func (l *Lexer) NextItem() *Item {
 	return item
 }
 
+func (l *Lexer) FirstItem() *Item {
+	if !l.HasNextItem() {
+		return itemEOF
+	}
+
+	i := l.NextItem()
+	l.BackupItem()
+
+	return i
+}
+
+func (l *Lexer) BackupItem() *Lexer {
+	l.itemPos--
+	return l
+}
+
 func (l *Lexer) HasNextItem() bool {
 	return l.itemPos < len(l.items)
 }
@@ -341,12 +357,21 @@ func parseItemTypeFromString(text string) itemType {
 }
 
 func isOperator(strOp string) bool {
-	return strOp == "+" || strOp == "-" || strOp == "*" ||
-		strOp == "/" || strOp == "^" || strOp == "&&" || strOp == "||"
+	switch strOp {
+	case "+", "-", "*", "/", "=", "==", "&&", "||", "^":
+		return true
+	}
+
+	return false
 }
 
 func isOperatorPiece(r rune) bool {
-	return r == '+' || r == '-' || r == '*' || r == '/' || r == '^' || r == '&' || r == '|'
+	switch r {
+	case '+', '-', '/', '*', '=', '&', '|', '^':
+		return true
+	}
+
+	return false
 }
 
 func isAlphaNumeric(r rune) bool {
