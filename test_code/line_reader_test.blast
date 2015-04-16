@@ -1,0 +1,11 @@
+
+function add(n1, n2)
+	if n1 == n2
+		return n1 * 2
+	end
+
+	return n1 + n2
+end
+
+add(22, 99)
+add(22, 22)
