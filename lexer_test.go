@@ -62,6 +62,18 @@ func TestLexerItemText(t *testing.T) {
 	assert.Equal(t, "1", lexer.NextItem().text)
 	assert.Equal(t, "+", lexer.NextItem().text)
 	assert.Equal(t, "100", lexer.NextItem().text)
+
+	lexer = NewLexer("((100 + 13) * 78)")
+	lexer.Lex()
+	assert.Equal(t, "(", lexer.NextItem().text)
+	assert.Equal(t, "(", lexer.NextItem().text)
+	assert.Equal(t, "100", lexer.NextItem().text)
+	assert.Equal(t, "+", lexer.NextItem().text)
+	assert.Equal(t, "13", lexer.NextItem().text)
+	assert.Equal(t, ")", lexer.NextItem().text)
+	assert.Equal(t, "*", lexer.NextItem().text)
+	assert.Equal(t, "78", lexer.NextItem().text)
+	assert.Equal(t, ")", lexer.NextItem().text)
 }
 
 func TestLexerItemType(t *testing.T) {

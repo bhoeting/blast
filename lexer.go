@@ -9,6 +9,12 @@ import (
 	"unicode/utf8"
 )
 
+func Lex(input string) *Lexer {
+	lexer := NewLexer(input)
+	lexer.Lex()
+	return lexer
+}
+
 type Lexer struct {
 	pos        int
 	width      int
@@ -128,9 +134,8 @@ func (l *Lexer) String() string {
 
 func (l *Lexer) Lex() lexerFn {
 
-	for l.HasNext() {
+	if l.HasNext() {
 		r := l.Peek()
-
 		if r == '"' {
 			return l.LexString()
 		}
@@ -241,12 +246,20 @@ func (l *Lexer) LexString() lexerFn {
 }
 
 func (l *Lexer) ConsumeUntilNotValid(isValid func(r rune) bool) {
-	for r := l.Next(); isValid(r); r = l.Next() {
-		l.Consume(r)
+	var r rune
+
+	for {
+		r = l.Next()
+		if isValid(r) {
+			l.Consume(r)
+		} else {
+			break
+		}
 	}
 
-	if l.HasNext() {
+	if l.HasNext() || r != eof {
 		l.Backup()
+		println("peekiun", string(l.Peek()))
 	}
 }
 
@@ -324,6 +337,12 @@ func (l *Lexer) NextItem() *Item {
 	return item
 }
 
+func (l *Lexer) PeekItem() *Item {
+	i := l.NextItem()
+	l.BackupItem()
+	return i
+}
+
 func (l *Lexer) FirstItem() *Item {
 	if !l.HasNextItem() {
 		return itemEOF
@@ -358,7 +377,7 @@ func parseItemTypeFromString(text string) itemType {
 
 func isOperator(strOp string) bool {
 	switch strOp {
-	case "+", "-", "*", "/", "=", "==", "&&", "||", "^":
+	case "+", "-", "*", "/", "=", "==", "&&", "||", "^", "<", "<=", ">", ">=", "!=":
 		return true
 	}
 
@@ -367,7 +386,7 @@ func isOperator(strOp string) bool {
 
 func isOperatorPiece(r rune) bool {
 	switch r {
-	case '+', '-', '/', '*', '=', '&', '|', '^':
+	case '+', '-', '/', '*', '=', '&', '|', '^', '<', '>', '!':
 		return true
 	}
 
