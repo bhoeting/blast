@@ -2,8 +2,6 @@ package blast
 
 import "strings"
 
-type lineReaderFn func() lineReaderFn
-
 type LineReader struct {
 	strLines []string
 	lines    []*Line
