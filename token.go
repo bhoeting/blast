@@ -1,0 +1,286 @@
+package blast
+
+import (
+	"fmt"
+	"log"
+	"strconv"
+)
+
+type Token interface {
+	GetType() tokenType
+	String() string
+}
+
+type tokenType int
+
+const (
+	tokenTypeUnkown = iota
+	tokenTypeFuncCall
+	tokenTypeVariable
+	tokenTypeNumber
+	tokenTypeString
+	tokenTypeParen
+	tokenTypeBoolean
+	tokenTypeOperator
+	tokenTypeComma
+)
+
+type Operator struct {
+	typ opType
+}
+
+type opType int
+
+const (
+	opTypeAddition = iota
+	opTypeSubtraction
+	opTypeMultiplication
+	opTypeDivision
+	opTypeExponent
+	opTypeAssignment
+	opTypeEqualTo
+	opTypeNotEqualTo
+	opTypeLessThan
+	opTypeLessThanOrEqualTo
+	opTypeGreaterThan
+	opTypeGreaterThanOrEqualTo
+	opTypeAnd
+	opTypeOr
+)
+
+var operatorKey = map[string]opType{
+	"+":  opTypeAddition,
+	"-":  opTypeSubtraction,
+	"*":  opTypeMultiplication,
+	"/":  opTypeDivision,
+	"^":  opTypeExponent,
+	"=":  opTypeAssignment,
+	"==": opTypeEqualTo,
+	"!=": opTypeNotEqualTo,
+	"<":  opTypeLessThan,
+	"<=": opTypeLessThanOrEqualTo,
+	">":  opTypeGreaterThan,
+	">=": opTypeGreaterThanOrEqualTo,
+	"&&": opTypeAnd,
+	"||": opTypeOr,
+}
+
+var operatorStrings = map[opType]string{
+	opTypeAddition:             "+",
+	opTypeSubtraction:          "-",
+	opTypeMultiplication:       "*",
+	opTypeDivision:             "/",
+	opTypeExponent:             "^",
+	opTypeAssignment:           "=",
+	opTypeEqualTo:              "==",
+	opTypeNotEqualTo:           "!=",
+	opTypeLessThan:             "<",
+	opTypeLessThanOrEqualTo:    "<=",
+	opTypeGreaterThan:          ">",
+	opTypeGreaterThanOrEqualTo: ">=",
+	opTypeAnd:                  "&&",
+	opTypeOr:                   "||",
+}
+
+func (o *Operator) GetType() tokenType {
+	return tokenTypeOperator
+}
+
+func (o *Operator) String() string {
+	return operatorStrings[o.typ]
+}
+
+func NewOperator(strOp string) *Operator {
+	operator := new(Operator)
+
+	if ot, ok := operatorKey[strOp]; ok {
+		operator.typ = ot
+	} else {
+		log.Fatalf("Could not parse operator %s", strOp)
+	}
+
+	return operator
+}
+
+type Number struct {
+	value float64
+}
+
+func (n *Number) GetType() tokenType {
+	return tokenTypeNumber
+}
+
+func (n *Number) String() string {
+	return fmt.Sprintf("%v", n.value)
+}
+
+func NewNumber(strNum string) *Number {
+	number := new(Number)
+	value, err := strconv.ParseFloat(strNum, 64)
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	number.value = value
+	return number
+}
+
+type Boolean struct {
+	typ booleanType
+}
+
+type booleanType int
+
+const (
+	booleanTypeTrue = iota
+	booleanTypeFalse
+)
+
+func (b *Boolean) GetType() tokenType {
+	return tokenTypeVariable
+}
+
+func (b *Boolean) String() string {
+	switch b.typ {
+	case booleanTypeTrue:
+		return "true"
+	case booleanTypeFalse:
+		return "false"
+	}
+	return "false"
+}
+
+func NewBoolean(strBool string) *Boolean {
+	boolean := new(Boolean)
+
+	switch strBool {
+	case "true":
+		boolean.typ = booleanTypeTrue
+	case "false":
+		boolean.typ = booleanTypeFalse
+	default:
+		log.Fatal("Could not parse boolean")
+	}
+
+	return boolean
+}
+
+type Paren struct {
+	typ parenType
+}
+
+type parenType int
+
+const (
+	parenTypeOpen = iota
+	parenTypeClose
+	parenTypeNil
+)
+
+func (p *Paren) GetType() tokenType {
+	return tokenTypeParen
+}
+
+func (p *Paren) String() string {
+	switch p.typ {
+	case parenTypeOpen:
+		return "("
+	default:
+		return ")"
+	}
+}
+
+func NewParen(strParen string) *Paren {
+	paren := new(Paren)
+
+	switch strParen {
+	case "(":
+		paren.typ = parenTypeOpen
+	case ")":
+		paren.typ = parenTypeClose
+	default:
+		log.Fatal("Could not parse paren")
+	}
+
+	return paren
+}
+
+type String struct {
+	value string
+}
+
+func (s *String) GetType() tokenType {
+	return tokenTypeString
+}
+
+func (s *String) String() string {
+	return fmt.Sprintf("\"%s\"", s.value)
+}
+
+func NewString(s string) *String {
+	str := new(String)
+	str.value = s
+	return str
+}
+
+type FunctionCall struct {
+	name string
+}
+
+func (f *FunctionCall) GetType() tokenType {
+	return tokenTypeFuncCall
+}
+
+func (f *FunctionCall) String() string {
+	return fmt.Sprintf("%s()", f.name)
+}
+
+func NewFunctionCall(strName string) *FunctionCall {
+	f := new(FunctionCall)
+	f.name = strName
+	return f
+}
+
+type Variable struct {
+	name  string
+	value Token
+}
+
+func (v *Variable) GetType() tokenType {
+	return tokenTypeVariable
+}
+
+func (v *Variable) String() string {
+	return v.name
+}
+
+func NewVariable(strName string) *Variable {
+	v := new(Variable)
+	v.name = strName
+	return v
+}
+
+type Comma struct{}
+
+func NewComma() *Comma {
+	return new(Comma)
+}
+
+func (c *Comma) GetType() tokenType {
+	return tokenTypeComma
+}
+
+func (c *Comma) String() string {
+	return ","
+}
+
+type tokenNil struct{}
+
+func (n *tokenNil) GetType() tokenType {
+	return tokenTypeUnkown
+}
+
+func (n *tokenNil) String() string {
+	return "<NIL>"
+}
