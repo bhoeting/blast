@@ -23,6 +23,7 @@ const (
 	tokenTypeBoolean
 	tokenTypeOperator
 	tokenTypeComma
+	tokenTypeArgCount
 )
 
 type Operator struct {
@@ -126,6 +127,12 @@ func NewNumber(strNum string) *Number {
 	return number
 }
 
+func NewNumberFromFloat(value float64) *Number {
+	number := new(Number)
+	number.value = value
+	return number
+}
+
 type Boolean struct {
 	typ booleanType
 }
@@ -138,7 +145,7 @@ const (
 )
 
 func (b *Boolean) GetType() tokenType {
-	return tokenTypeVariable
+	return tokenTypeBoolean
 }
 
 func (b *Boolean) String() string {
@@ -161,6 +168,19 @@ func NewBoolean(strBool string) *Boolean {
 		boolean.typ = booleanTypeFalse
 	default:
 		log.Fatal("Could not parse boolean")
+	}
+
+	return boolean
+}
+
+func NewBooleanFromBool(value bool) *Boolean {
+	boolean := new(Boolean)
+
+	switch value {
+	case true:
+		boolean.typ = booleanTypeTrue
+	default:
+		boolean.typ = booleanTypeFalse
 	}
 
 	return boolean
@@ -283,4 +303,67 @@ func (n *tokenNil) GetType() tokenType {
 
 func (n *tokenNil) String() string {
 	return "<NIL>"
+}
+
+type ArgCount int
+
+func (a ArgCount) GetType() tokenType {
+	return tokenTypeArgCount
+}
+
+func (a ArgCount) String() string {
+	return fmt.Sprintf("%d", int(a))
+}
+
+func NewArgCount(count int) ArgCount {
+	return ArgCount(count)
+}
+
+func NumberFromToken(token Token) float64 {
+	switch token.GetType() {
+	case tokenTypeNumber:
+		return token.(*Number).value
+	case tokenTypeBoolean:
+		switch token.(*Boolean).typ {
+		case booleanTypeTrue:
+			return 1.0
+		case booleanTypeFalse:
+			return 0.0
+		}
+	default:
+		log.Fatalf("Could not get numerical value from %v", token)
+	}
+	return 0.0
+}
+
+func StringFromToken(token Token) string {
+	switch token.GetType() {
+	case tokenTypeNumber, tokenTypeBoolean:
+		return token.String()
+	case tokenTypeString:
+		return token.(*String).value
+	}
+
+	log.Fatalf("Could not get string from %v", token)
+	return ""
+}
+
+func BooleanFromToken(token Token) bool {
+	switch token.GetType() {
+	case tokenTypeBoolean:
+		switch token.(*Boolean).typ {
+		case booleanTypeTrue:
+			return true
+		case booleanTypeFalse:
+			return false
+		}
+	case tokenTypeNumber:
+		if token.(*Number).value == 0.0 {
+			return false
+		}
+		return true
+	}
+
+	log.Fatalf("Could not get boolean value from %v", token)
+	return false
 }
