@@ -259,7 +259,6 @@ func (l *Lexer) ConsumeUntilNotValid(isValid func(r rune) bool) {
 
 	if l.HasNext() || r != eof {
 		l.Backup()
-		println("peekiun", string(l.Peek()))
 	}
 }
 
