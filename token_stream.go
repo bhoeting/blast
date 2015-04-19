@@ -55,6 +55,17 @@ func (ts *TokenStream) Next() Token {
 	return token
 }
 
+func (ts *TokenStream) Backup() *TokenStream {
+	ts.pos--
+	return ts
+}
+
+func (ts *TokenStream) Peek() Token {
+	t := ts.Next()
+	ts.Backup()
+	return t
+}
+
 func (ts *TokenStream) String() string {
 	str := ""
 
