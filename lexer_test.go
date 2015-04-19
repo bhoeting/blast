@@ -74,6 +74,11 @@ func TestLexerItemText(t *testing.T) {
 	assert.Equal(t, "*", lexer.NextItem().text)
 	assert.Equal(t, "78", lexer.NextItem().text)
 	assert.Equal(t, ")", lexer.NextItem().text)
+
+	lexer = NewLexer("true false")
+	lexer.Lex()
+	assert.Equal(t, "true", lexer.NextItem().text)
+	assert.Equal(t, "false", lexer.NextItem().text)
 }
 
 func TestLexerItemType(t *testing.T) {
@@ -90,6 +95,13 @@ func TestLexerItemType(t *testing.T) {
 	assertItemType(t, itemTypeOpenParen, lexer.NextItem())
 	assertItemType(t, itemTypeCloseParen, lexer.NextItem())
 	assertItemType(t, itemTypeComma, lexer.NextItem())
+
+	lexer = NewLexer("200.9 false true \"derp\"")
+	lexer.Lex()
+	lexer.NextItem()
+
+	assertItemType(t, itemTypeBool, lexer.NextItem())
+	assertItemType(t, itemTypeBool, lexer.NextItem())
 }
 
 func TestReservedItems(t *testing.T) {
