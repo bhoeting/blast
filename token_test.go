@@ -24,6 +24,12 @@ func TestTokenStream(t *testing.T) {
 	assert.Equal(t, tokenTypeVariable, ts.Next().GetType())
 	assert.Equal(t, tokenTypeOperator, ts.Next().GetType())
 	assert.Equal(t, tokenTypeFuncCall, ts.Next().GetType())
+
+	ts = NewTokenStreamFromLexer(Lex("return n1 + n2"))
+	assert.Equal(t, tokenTypeReserved, ts.Next().GetType())
+	assert.Equal(t, tokenTypeVariable, ts.Next().GetType())
+	assert.Equal(t, tokenTypeOperator, ts.Next().GetType())
+	assert.Equal(t, tokenTypeVariable, ts.Next().GetType())
 }
 
 func TestTokenConversions(t *testing.T) {

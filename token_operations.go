@@ -58,6 +58,16 @@ func RaiseTokens(t1 Token, t2 Token) Token {
 }
 
 func AssignTokens(t1 Token, t2 Token) Token {
+	if t1.GetType() != tokenTypeVariable {
+		log.Fatalf("Could not assign %v to %v", t2, t1)
+	}
+
+	if v, ok := t1.(*Variable); ok {
+		SetVar(v.name, t2)
+		return t2
+	}
+
+	log.Fatalf("Could not assign %v to %v", t2, t1)
 	return &tokenNil{}
 }
 

@@ -79,6 +79,17 @@ func TestLexerItemText(t *testing.T) {
 	lexer.Lex()
 	assert.Equal(t, "true", lexer.NextItem().text)
 	assert.Equal(t, "false", lexer.NextItem().text)
+
+	lexer = NewLexer("for 1 -> 20, i, 2")
+	lexer.Lex()
+	assert.Equal(t, "for", lexer.NextItem().text)
+	assert.Equal(t, "1", lexer.NextItem().text)
+	assert.Equal(t, "->", lexer.NextItem().text)
+	assert.Equal(t, "20", lexer.NextItem().text)
+	assert.Equal(t, ",", lexer.NextItem().text)
+	assert.Equal(t, "i", lexer.NextItem().text)
+	assert.Equal(t, ",", lexer.NextItem().text)
+	assert.Equal(t, "2", lexer.NextItem().text)
 }
 
 func TestLexerItemType(t *testing.T) {
@@ -102,12 +113,22 @@ func TestLexerItemType(t *testing.T) {
 
 	assertItemType(t, itemTypeBool, lexer.NextItem())
 	assertItemType(t, itemTypeBool, lexer.NextItem())
+
+	lexer = NewLexer("return n1 + n2")
+	lexer.Lex()
+
+	assertItemType(t, itemTypeReturn, lexer.NextItem())
+	assertItemType(t, itemTypeIdentifier, lexer.NextItem())
+	assertItemType(t, itemTypeOperator, lexer.NextItem())
+	assertItemType(t, itemTypeIdentifier, lexer.NextItem())
+	assert.Equal(t, false, lexer.HasNextItem())
 }
 
 func TestReservedItems(t *testing.T) {
-	lexer := NewLexer("return if else end function XX")
+	lexer := NewLexer("for return if else end function XX")
 	lexer.Lex()
 
+	assertItemType(t, itemTypeFor, lexer.NextItem())
 	assertItemType(t, itemTypeReturn, lexer.NextItem())
 	assertItemType(t, itemTypeIf, lexer.NextItem())
 	assertItemType(t, itemTypeElse, lexer.NextItem())

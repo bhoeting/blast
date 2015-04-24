@@ -30,3 +30,20 @@ func TestRPN(t *testing.T) {
 	rpn = NewTokenStreamInRPN(ts)
 	assert.Equal(t, "33 413 min() 2 300 102 max() 3 ", rpn.String())
 }
+
+func TestRPNEvaluation(t *testing.T) {
+	ts := NewTokenStreamFromLexer(Lex("212 + 341"))
+	rpn := NewTokenStreamInRPN(ts)
+
+	result := EvaluateRPN(rpn)
+
+	assert.Equal(t, 553, NumberFromToken(result))
+}
+
+func TestForLoopParsing(t *testing.T) {
+	fd := ParseForDeclaration(NewTokenStreamFromLexer(Lex("for 1 -> 20, x, 1")))
+	assert.Equal(t, 1.0, fd.start)
+	assert.Equal(t, 20, fd.end)
+	assert.Equal(t, "x", fd.counter.name)
+	assert.Equal(t, 1.0, fd.step)
+}

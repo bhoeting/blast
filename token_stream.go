@@ -1,7 +1,5 @@
 package blast
 
-import "log"
-
 type TokenStream struct {
 	pos    int
 	size   int
@@ -66,6 +64,11 @@ func (ts *TokenStream) Peek() Token {
 	return t
 }
 
+func (ts *TokenStream) Evaluate() Token {
+	rpn := NewTokenStreamInRPN(ts)
+	return EvaluateRPN(rpn)
+}
+
 func (ts *TokenStream) String() string {
 	str := ""
 
@@ -79,6 +82,32 @@ func (ts *TokenStream) String() string {
 func NewTokenStream() *TokenStream {
 	ts := new(TokenStream)
 	return ts
+}
+
+func (ts *TokenStream) Chop() *TokenStream {
+	newTS := NewTokenStream()
+
+	for ts.HasNext() {
+		newTS.Push(ts.Next())
+	}
+
+	return newTS
+}
+
+func (ts *TokenStream) Reverse() {
+	reversed := NewTokenStream()
+
+	for len(ts.tokens) != 0 {
+		token := ts.Pop()
+		reversed.Push(token)
+	}
+
+	ts.tokens = reversed.tokens
+	ts.size = reversed.size
+}
+
+func (ts *TokenStream) Reset() {
+	ts.pos = 0
 }
 
 func NewTokenStreamFromLexer(l *Lexer) *TokenStream {
@@ -99,15 +128,16 @@ func NewTokenStreamFromLexer(l *Lexer) *TokenStream {
 		case itemTypeComma:
 			ts.Push(NewComma())
 		case itemTypeIdentifier:
-			if l.PeekItem().typ == itemTypeOpenParen {
+			if l.HasNextItem() && l.PeekItem().typ == itemTypeOpenParen {
 				ts.Push(NewFunctionCall(item.text))
 			} else {
 				ts.Push(NewVariable(item.text))
 			}
 		default:
-			log.Fatalf("Could not convert item to token %s", item.text)
+			ts.Push(NewReserved())
 		}
 	}
 
+	l.itemPos = 0
 	return ts
 }

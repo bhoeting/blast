@@ -1,10 +1,14 @@
 package blast
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
 
 type LineReader struct {
 	strLines []string
 	lines    []*Line
+	size     int
 	pos      int
 	nLines   int
 	lineNum  int
@@ -19,6 +23,7 @@ var (
 		itemTypeEnd:      lineTypeEnd,
 		itemTypeIf:       lineTypeIf,
 		itemTypeElse:     lineTypeElse,
+		itemTypeFor:      lineTypeFor,
 		itemTypeFunction: lineTypeFunction,
 		itemTypeReturn:   lineTypeReturn,
 	}
@@ -29,11 +34,24 @@ type Line struct {
 	typ   lineType
 }
 
+func (l *Line) String() string {
+	return l.lexer.String()
+}
+
+func (l *Line) Run() Token {
+	return l.TokenStream().Evaluate()
+}
+
+func (l *Line) TokenStream() *TokenStream {
+	return NewTokenStreamFromLexer(l.lexer)
+}
+
 type lineType int
 
 const (
 	lineTypeBasic = iota
 	lineTypeIf
+	lineTypeFor
 	lineTypeFunction
 	lineTypeEnd
 	lineTypeReturn
@@ -46,8 +64,8 @@ func NewLineReader(buffer string) *LineReader {
 	lr := new(LineReader)
 	lr.strLines = strings.Split(buffer, "\n")
 	lr.lineNum = 1
+	lr.size = 0
 	lr.nLines = len(lr.strLines)
-	lr.lines = make([]*Line, lr.nLines)
 	return lr
 }
 
@@ -56,13 +74,52 @@ func (lr *LineReader) ReadLines() *LineReader {
 
 	for line := lr.next(); line.typ != lineTypeEOF; line = lr.next() {
 		if line.typ != lineTypeBlank {
-			lr.lines[index] = line
+			lr.lines = append(lr.lines, line)
+			lr.size++
 			index++
+		}
+
+		if line.typ == lineTypeFunction {
+			lr.getFunction(line)
 		}
 	}
 
 	lr.pos = 0
 	return lr
+}
+
+func (lr *LineReader) getFunction(line *Line) {
+	depth := 1
+	f := ParseUserFunction(line.TokenStream())
+	newReader := new(LineReader)
+
+	for line := lr.next(); line.typ != lineTypeEOF; line = lr.next() {
+		if line.typ == lineTypeIf || line.typ == lineTypeFunction || line.typ == lineTypeFor {
+			depth++
+		}
+
+		if line.typ == lineTypeEnd {
+			depth--
+			if depth == 0 {
+				break
+			}
+		}
+
+		if line.typ == lineTypeFunction {
+			log.Fatal("Cannot have function in function")
+		}
+
+		newReader.lines = append(newReader.lines, line)
+		newReader.size++
+	}
+
+	f.block = NewBlockBuilder(newReader).Build()
+
+	if scopeIsInitalized {
+		SetFunc(f.name, f)
+	}
+
+	println(len(f.block.blocks))
 }
 
 func (lr *LineReader) NextLine() *Line {
@@ -83,7 +140,7 @@ func (lr *LineReader) Backup() *LineReader {
 }
 
 func (lr *LineReader) HasNextLine() bool {
-	return lr.pos < lr.nLines
+	return lr.pos < lr.size
 }
 
 func (lr *LineReader) next() *Line {

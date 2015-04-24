@@ -24,6 +24,7 @@ const (
 	tokenTypeOperator
 	tokenTypeComma
 	tokenTypeArgCount
+	tokenTypeReserved
 )
 
 type Operator struct {
@@ -47,6 +48,7 @@ const (
 	opTypeGreaterThanOrEqualTo
 	opTypeAnd
 	opTypeOr
+	opTypeArrow
 )
 
 var operatorKey = map[string]opType{
@@ -64,6 +66,7 @@ var operatorKey = map[string]opType{
 	">=": opTypeGreaterThanOrEqualTo,
 	"&&": opTypeAnd,
 	"||": opTypeOr,
+	"->": opTypeArrow,
 }
 
 var operatorStrings = map[opType]string{
@@ -81,6 +84,7 @@ var operatorStrings = map[opType]string{
 	opTypeGreaterThanOrEqualTo: ">=",
 	opTypeAnd:                  "&&",
 	opTypeOr:                   "||",
+	opTypeArrow:                "->",
 }
 
 func (o *Operator) GetType() tokenType {
@@ -317,6 +321,22 @@ func (a ArgCount) String() string {
 
 func NewArgCount(count int) ArgCount {
 	return ArgCount(count)
+}
+
+type Reserved struct {
+	value string
+}
+
+func (r *Reserved) GetType() tokenType {
+	return tokenTypeReserved
+}
+
+func (r *Reserved) String() string {
+	return "<RESERVED>"
+}
+
+func NewReserved() *Reserved {
+	return &Reserved{}
 }
 
 func NumberFromToken(token Token) float64 {

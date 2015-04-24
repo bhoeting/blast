@@ -70,6 +70,7 @@ const (
 	itemTypeElse
 	itemTypeReturn
 	itemTypeEnd
+	itemTypeFor
 )
 
 func (typ itemType) String() string {
@@ -110,6 +111,7 @@ var (
 		"return":   itemTypeReturn,
 		"function": itemTypeFunction,
 		"end":      itemTypeEnd,
+		"for":      itemTypeFor,
 	}
 )
 
@@ -195,7 +197,10 @@ func (l *Lexer) LexIdentifier() lexerFn {
 }
 
 func (l *Lexer) LexNumber() lexerFn {
+	var temp rune
+
 	l.ConsumeUntilNotValid(func(r rune) bool {
+		temp = r
 
 		// Check that a negative sign
 		// only occurs at the beginning
@@ -216,6 +221,12 @@ func (l *Lexer) LexNumber() lexerFn {
 		// Check the rune is a number
 		return unicode.IsNumber(r)
 	})
+
+	if l.curr == "-" {
+		l.Backup()
+		l.curr = ""
+		return l.LexOperator()
+	}
 
 	l.PushItem(itemTypeNum)
 	return l.Lex()
@@ -376,7 +387,7 @@ func parseItemTypeFromString(text string) itemType {
 
 func isOperator(strOp string) bool {
 	switch strOp {
-	case "+", "-", "*", "/", "=", "==", "&&", "||", "^", "<", "<=", ">", ">=", "!=":
+	case "+", "-", "*", "/", "=", "==", "&&", "||", "^", "<", "<=", ">", ">=", "!=", "->":
 		return true
 	}
 
