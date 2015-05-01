@@ -2,29 +2,47 @@ package blast
 
 import "fmt"
 
+// Function is an interface
+// with a call method
 type Function interface {
 	Call(args *TokenStream) Token
 }
 
+// funcNil is returned when there
+// is undefined behavior related
+// to a Function
 var funcNil = &UserFunction{}
 
+// UserFunction is a struct
+// that represents a user
+// defined function
 type UserFunction struct {
 	params []*Param
 	name   string
 	block  *Block
 }
 
+// Param is a struct that
+// represents a function
+// definition parameter
 type Param struct {
 	name  string
 	value Token
 }
 
+// goFunc is a func type with a TokenStream
+// parameter that returns an interface
 type goFunc func(args *TokenStream) interface{}
 
+// BuilinFunction is a struct represeting
+// a function built in to Blast that
+// is implemented in Go
 type BuiltinFunction struct {
 	f goFunc
 }
 
+// Call runs a UserFunction and returns the
+// result as a Token
 func (f *UserFunction) Call(args *TokenStream) Token {
 	Scopes.New()
 
@@ -42,6 +60,7 @@ func (f *UserFunction) Call(args *TokenStream) Token {
 	return result
 }
 
+// Call runs a BuiltinFunction and returns the result as a Token
 func (bf *BuiltinFunction) Call(args *TokenStream) Token {
 	result := bf.f(args)
 
@@ -63,6 +82,8 @@ func (bf *BuiltinFunction) Call(args *TokenStream) Token {
 	return &tokenNil{}
 }
 
+// ParseUserFunction parses a TokenStream into a user
+// function definition
 func ParseUserFunction(ts *TokenStream) *UserFunction {
 	parenDepth := 1
 	f := new(UserFunction)
@@ -106,6 +127,8 @@ func ParseUserFunction(ts *TokenStream) *UserFunction {
 	return f
 }
 
+// ParseParam parses a TokenStream into
+// a parameter
 func ParseParam(ts *TokenStream) *Param {
 	param := new(Param)
 
@@ -127,18 +150,22 @@ func ParseParam(ts *TokenStream) *Param {
 	return param
 }
 
+// NewBuiltinFunction returns a new BuiltinFunction
 func NewBuiltinFunc(f goFunc) *BuiltinFunction {
 	return &BuiltinFunction{
 		f: f,
 	}
 }
 
+// LoadBuiltinFunctions adds all the BuiltinFuctions
+// to the scope
 func LoadBuiltinFunctions() {
 	SetFunc("print", NewBuiltinFunc(builtinPrint))
 	SetFunc("println", NewBuiltinFunc(builtinPrintln))
 	SetFunc("modulus", NewBuiltinFunc(builtinModulus))
 }
 
+// builtinPrint prints the Nodes
 func builtinPrint(args *TokenStream) interface{} {
 	str := ""
 
@@ -152,6 +179,7 @@ func builtinPrint(args *TokenStream) interface{} {
 	return nil
 }
 
+// builtinPrint prints the Nodes on their own line
 func builtinPrintln(args *TokenStream) interface{} {
 	str := ""
 
@@ -167,6 +195,8 @@ func builtinPrintln(args *TokenStream) interface{} {
 	return nil
 }
 
+// builtinModulus performs the modulus operation on two Nodes.
+// TODO: make this an operator
 func builtinModulus(args *TokenStream) interface{} {
 	return float64(int(NumberFromToken(args.Next())) % int(NumberFromToken(args.Next())))
 }

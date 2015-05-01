@@ -2,6 +2,8 @@ package blast
 
 import "log"
 
+// opPrecedenceMap is used to determine
+// the precedence of an operator
 var opPrecedenceMap = map[opType]int{
 	opTypeAddition:             2,
 	opTypeSubtraction:          2,
@@ -19,6 +21,9 @@ var opPrecedenceMap = map[opType]int{
 	opTypeAssignment:           -1,
 }
 
+// ForDeclaration is a struct
+// that holds all the parts
+// of a for loop
 type ForDeclaration struct {
 	start   float64
 	end     float64
@@ -26,18 +31,25 @@ type ForDeclaration struct {
 	counter *Variable
 }
 
+// EvaluateRPN evaluates an RPN expression
 func EvaluateRPN(ts *TokenStream) Token {
 	var token Token
 	tokens := NewTokenStream()
 	for ts.HasNext() {
 		token = ts.Next()
 		switch token.GetType() {
+		// Push the value Nodes
 		case tokenTypeNumber, tokenTypeBoolean,
 			tokenTypeVariable, tokenTypeString:
 			tokens.Push(token)
+		// If an operator is detected, pop two Nodes
+		// off the stack and evaluate them
 		case tokenTypeOperator:
 			t1, t2 := tokens.Pop(), tokens.Pop()
 			tokens.Push(EvaluateTokens(t2, t1, token))
+		// If a function call Node is detected, then
+		// pop nodes off the stack to pass to the
+		// function call until argCount is zero
 		case tokenTypeFuncCall:
 			argCount := ts.Next().(ArgCount)
 			args := NewTokenStream()
@@ -56,6 +68,8 @@ func EvaluateRPN(ts *TokenStream) Token {
 	return EvaluateToken(tokens.Pop())
 }
 
+// NewTokenStreamInRPN takes a TokenStream and rearranges
+// the tokens so they are in reverse polish notation
 func NewTokenStreamInRPN(ts *TokenStream) *TokenStream {
 	funcArgCounts := make(map[int]int, 0)
 	currFuncId := -1
@@ -115,6 +129,7 @@ func NewTokenStreamInRPN(ts *TokenStream) *TokenStream {
 	return output
 }
 
+// EvaluateTokens performs an operation of two Nodes
 func EvaluateTokens(t1 Token, t2 Token, tokOp Token) Token {
 	opType := tokOp.(*Operator).typ
 
@@ -152,6 +167,8 @@ func EvaluateTokens(t1 Token, t2 Token, tokOp Token) Token {
 	return &tokenNil{}
 }
 
+// EvaluateToken returns the value of a variable Node
+// or the Node if it's not a variable
 func EvaluateToken(t1 Token) Token {
 	if t1.GetType() == tokenTypeVariable {
 		if v, err := GetVar(t1.(*Variable).name); err == nil {
@@ -163,6 +180,8 @@ func EvaluateToken(t1 Token) Token {
 	return t1
 }
 
+// EvaluateFunctionCall runs the function stored in a function node
+// and returns the result
 func EvalulateFunctionCall(funcCall Token, args *TokenStream) Token {
 	f, err := GetFunc(funcCall.(*FunctionCall).name)
 
@@ -173,6 +192,7 @@ func EvalulateFunctionCall(funcCall Token, args *TokenStream) Token {
 	return f.Call(args)
 }
 
+// PasrseForDeclaration parses a NodeStream into a `ForDeclaration`
 func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 	// for 1 -> 20, counter, 2
 	fd := new(ForDeclaration)
@@ -227,6 +247,8 @@ func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 	return fd
 }
 
+// isLeftParen determines the node
+// is a left paren
 func isLeftParen(token Token) bool {
 	if paren, ok := token.(*Paren); ok {
 		return paren.typ == parenTypeOpen
@@ -235,6 +257,7 @@ func isLeftParen(token Token) bool {
 	return false
 }
 
+// getParenType gets the paren type of a node
 func getParenType(token Token) parenType {
 	if paren, ok := token.(*Paren); ok {
 		return paren.typ
@@ -243,6 +266,10 @@ func getParenType(token Token) parenType {
 	return parenTypeNil
 }
 
+// shouldPopOperator is used in the conversion to RPN.
+// It is used when an operator is read and determines
+// if it should be popped based on the operator at the
+// top of the stack
 func shouldPopOperator(topToken Token, opToken Token) bool {
 	var ok bool
 	var topOp, op *Operator

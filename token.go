@@ -6,11 +6,17 @@ import (
 	"strconv"
 )
 
+// Node is an interface
+// for types created
+// from Tokens
 type Token interface {
 	GetType() tokenType
 	String() string
 }
 
+// nodeType is an int
+// representation of a
+// node type
 type tokenType int
 
 const (
@@ -27,10 +33,14 @@ const (
 	tokenTypeReserved
 )
 
+// Operator is a struct
+// that stores an opType
 type Operator struct {
 	typ opType
 }
 
+// opType is an int representing
+// an operator type
 type opType int
 
 const (
@@ -51,6 +61,8 @@ const (
 	opTypeArrow
 )
 
+// operatorKey is used to get an
+// operator type from a string
 var operatorKey = map[string]opType{
 	"+":  opTypeAddition,
 	"-":  opTypeSubtraction,
@@ -69,6 +81,9 @@ var operatorKey = map[string]opType{
 	"->": opTypeArrow,
 }
 
+// operatorStrings is used to get a
+// string representation from
+// an opType
 var operatorStrings = map[opType]string{
 	opTypeAddition:             "+",
 	opTypeSubtraction:          "-",
@@ -87,14 +102,17 @@ var operatorStrings = map[opType]string{
 	opTypeArrow:                "->",
 }
 
+// GetType returns tokenTypeOperator
 func (o *Operator) GetType() tokenType {
 	return tokenTypeOperator
 }
 
+// String returns an Operator as a string
 func (o *Operator) String() string {
 	return operatorStrings[o.typ]
 }
 
+// NewOperator returns a new Operator
 func NewOperator(strOp string) *Operator {
 	operator := new(Operator)
 
@@ -107,18 +125,22 @@ func NewOperator(strOp string) *Operator {
 	return operator
 }
 
+// Number is a struct that stores a float64
 type Number struct {
 	value float64
 }
 
+// GetType returns tokenTypeNumber
 func (n *Number) GetType() tokenType {
 	return tokenTypeNumber
 }
 
+// String returns a Number as a string
 func (n *Number) String() string {
 	return fmt.Sprintf("%v", n.value)
 }
 
+// NewNumber returns a new Number
 func NewNumber(strNum string) *Number {
 	number := new(Number)
 	value, err := strconv.ParseFloat(strNum, 64)
@@ -131,16 +153,21 @@ func NewNumber(strNum string) *Number {
 	return number
 }
 
+// NewNumberFromFloat returns a Number from a float64
 func NewNumberFromFloat(value float64) *Number {
 	number := new(Number)
 	number.value = value
 	return number
 }
 
+// Boolean is a struct that
+// stores a booleanType
 type Boolean struct {
 	typ booleanType
 }
 
+// booleanType is an int that
+// represents a booleanType
 type booleanType int
 
 const (
@@ -148,10 +175,12 @@ const (
 	booleanTypeFalse
 )
 
+// GetType returns tokenTypeBoolean
 func (b *Boolean) GetType() tokenType {
 	return tokenTypeBoolean
 }
 
+// String returns a Boolean as a string
 func (b *Boolean) String() string {
 	switch b.typ {
 	case booleanTypeTrue:
@@ -162,6 +191,7 @@ func (b *Boolean) String() string {
 	return "false"
 }
 
+// NewBoolean returns a new Boolean
 func NewBoolean(strBool string) *Boolean {
 	boolean := new(Boolean)
 
@@ -177,6 +207,7 @@ func NewBoolean(strBool string) *Boolean {
 	return boolean
 }
 
+// NewBooleanFromBool returns a new Boolean from a bool
 func NewBooleanFromBool(value bool) *Boolean {
 	boolean := new(Boolean)
 
@@ -190,10 +221,13 @@ func NewBooleanFromBool(value bool) *Boolean {
 	return boolean
 }
 
+// Paren is a struct with a parenTytpe
 type Paren struct {
 	typ parenType
 }
 
+// parenType is an int
+// of a paren type
 type parenType int
 
 const (
@@ -202,10 +236,12 @@ const (
 	parenTypeNil
 )
 
+// GetType returns tokenTypeParen
 func (p *Paren) GetType() tokenType {
 	return tokenTypeParen
 }
 
+// String returns a Paren as a string
 func (p *Paren) String() string {
 	switch p.typ {
 	case parenTypeOpen:
@@ -215,6 +251,7 @@ func (p *Paren) String() string {
 	}
 }
 
+// NewParen returns a new Paren
 func NewParen(strParen string) *Paren {
 	paren := new(Paren)
 
@@ -230,115 +267,155 @@ func NewParen(strParen string) *Paren {
 	return paren
 }
 
+// String is a struct that
+// stores a string
 type String struct {
 	value string
 }
 
+// GetType returns tokenTypeString
 func (s *String) GetType() tokenType {
 	return tokenTypeString
 }
 
+// String returns the string wrapped in quotes
 func (s *String) String() string {
 	return fmt.Sprintf("\"%s\"", s.value)
 }
 
+// NewString returns a new string
 func NewString(s string) *String {
 	str := new(String)
 	str.value = s
 	return str
 }
 
+// FunctionCall is a struct
+// that stores the name of
+// a function
 type FunctionCall struct {
 	name string
 }
 
+// GetType returns tokenTypeFuncCall
 func (f *FunctionCall) GetType() tokenType {
 	return tokenTypeFuncCall
 }
 
+// String returns the func name with parens
+// after it
 func (f *FunctionCall) String() string {
 	return fmt.Sprintf("%s()", f.name)
 }
 
+// NewFunctionCall returns a new FunctionCall
 func NewFunctionCall(strName string) *FunctionCall {
 	f := new(FunctionCall)
 	f.name = strName
 	return f
 }
 
+// Variable is a struct that
+// stores a name and Node
 type Variable struct {
 	name  string
 	value Token
 }
 
+// GetType returns tokenTypeVariable
 func (v *Variable) GetType() tokenType {
 	return tokenTypeVariable
 }
 
+// String returns the variable name
 func (v *Variable) String() string {
 	return v.name
 }
 
+// NewVariable returns a new Variable
 func NewVariable(strName string) *Variable {
 	v := new(Variable)
 	v.name = strName
 	return v
 }
 
+// Comma is an empty struct
 type Comma struct{}
 
+// NewComma returns a new Comma
 func NewComma() *Comma {
 	return new(Comma)
 }
 
+// GetType returns tokenTypeComma
 func (c *Comma) GetType() tokenType {
 	return tokenTypeComma
 }
 
+// String returns a `,`
 func (c *Comma) String() string {
 	return ","
 }
 
+// tokenNil is used for undefined behavior
 type tokenNil struct{}
 
+// GetType returns tokenTypeUnknown
 func (n *tokenNil) GetType() tokenType {
 	return tokenTypeUnkown
 }
 
+// String returns <NIL>
 func (n *tokenNil) String() string {
 	return "<NIL>"
 }
 
+// ArgCount is an int
+// representing the amount
+// of arguments passed in a
+// function
 type ArgCount int
 
+// GetType returns a tokenTypeArgCount
 func (a ArgCount) GetType() tokenType {
 	return tokenTypeArgCount
 }
 
+// String returns the ArgCount as a string
 func (a ArgCount) String() string {
 	return fmt.Sprintf("%d", int(a))
 }
 
+// NewArgCount returns a new ArgCount
 func NewArgCount(count int) ArgCount {
 	return ArgCount(count)
 }
 
+// Reserved is a struct
+// for reserved words and
+// stores the reserved word
 type Reserved struct {
 	value string
 }
 
+// GetType returns tokenTypeReserved
 func (r *Reserved) GetType() tokenType {
 	return tokenTypeReserved
 }
 
+// String returns <RESERVED>
 func (r *Reserved) String() string {
 	return "<RESERVED>"
 }
 
+// NewReserved returns a new
+// reserved word
 func NewReserved() *Reserved {
 	return &Reserved{}
 }
 
+// NumberFromToken returns a float64
+// from a Node
 func NumberFromToken(token Token) float64 {
 	switch token.GetType() {
 	case tokenTypeNumber:
@@ -356,6 +433,7 @@ func NumberFromToken(token Token) float64 {
 	return 0.0
 }
 
+// StringFromToken returns a string a Node
 func StringFromToken(token Token) string {
 	switch token.GetType() {
 	case tokenTypeNumber, tokenTypeBoolean:
@@ -368,6 +446,7 @@ func StringFromToken(token Token) string {
 	return ""
 }
 
+// BooleanFromToken returns a bool from a Node
 func BooleanFromToken(token Token) bool {
 	switch token.GetType() {
 	case tokenTypeBoolean:

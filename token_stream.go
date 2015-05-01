@@ -1,17 +1,23 @@
 package blast
 
+// NodeStream is a Node slice
+// wrapper with stack and
+// queue funcitonality
 type TokenStream struct {
 	pos    int
 	size   int
 	tokens []Token
 }
 
+// Push adds a Node to the NodeStream
 func (ts *TokenStream) Push(t Token) Token {
 	ts.tokens = append(ts.tokens, t)
 	ts.size++
 	return t
 }
 
+// Pop removes and returns the Node
+// at the top of the NodeStream
 func (ts *TokenStream) Pop() Token {
 	ts.size--
 	t := ts.tokens[ts.size]
@@ -19,6 +25,8 @@ func (ts *TokenStream) Pop() Token {
 	return t
 }
 
+// Top returns the Node at the
+// top of the NodeStream
 func (ts *TokenStream) Top() Token {
 	if ts.size-1 < 0 {
 		return &tokenNil{}
@@ -28,6 +36,8 @@ func (ts *TokenStream) Top() Token {
 	return t
 }
 
+// RemoveLast removes the first Node
+// from a NodeStream
 func (ts *TokenStream) RemoveLast() Token {
 	ts.size--
 	t := ts.tokens[0]
@@ -35,14 +45,21 @@ func (ts *TokenStream) RemoveLast() Token {
 	return t
 }
 
+// Length returns the length of a
+// NodeStream
 func (ts *TokenStream) Length() int {
 	return ts.size
 }
 
+// HasNext determines if there is
+// another node to return from
+// the NodeStream
 func (ts *TokenStream) HasNext() bool {
 	return ts.pos < ts.size
 }
 
+// Next returns the next node
+// from the NodeStream
 func (ts *TokenStream) Next() Token {
 	if ts.pos >= ts.size {
 		return &tokenNil{}
@@ -53,22 +70,30 @@ func (ts *TokenStream) Next() Token {
 	return token
 }
 
+// Backup decrements the position
+// in the NodeStream
 func (ts *TokenStream) Backup() *TokenStream {
 	ts.pos--
 	return ts
 }
 
+// Peek returns the next Node without
+// incrementing the position
 func (ts *TokenStream) Peek() Token {
 	t := ts.Next()
 	ts.Backup()
 	return t
 }
 
+// Evaluate converts the NodeStream
+// to RPN notation and evaluates it
 func (ts *TokenStream) Evaluate() Token {
 	rpn := NewTokenStreamInRPN(ts)
 	return EvaluateRPN(rpn)
 }
 
+// String returns a string representation
+// of the NodeStream
 func (ts *TokenStream) String() string {
 	str := ""
 
@@ -79,11 +104,15 @@ func (ts *TokenStream) String() string {
 	return str
 }
 
+// NewNodeStream returns a new NodeStream
 func NewTokenStream() *TokenStream {
 	ts := new(TokenStream)
 	return ts
 }
 
+// Chop returns a new NodeStream from
+// containing all the Nodes starting at the
+// position of the current NodeStream
 func (ts *TokenStream) Chop() *TokenStream {
 	newTS := NewTokenStream()
 
@@ -94,6 +123,8 @@ func (ts *TokenStream) Chop() *TokenStream {
 	return newTS
 }
 
+// Reverse reverses the order
+// of the Nodes in the NodeStream
 func (ts *TokenStream) Reverse() {
 	reversed := NewTokenStream()
 
@@ -106,10 +137,15 @@ func (ts *TokenStream) Reverse() {
 	ts.size = reversed.size
 }
 
+// Reset sets the position to
+// zero so Nodes can be returned
+// from it again with Next()
 func (ts *TokenStream) Reset() {
 	ts.pos = 0
 }
 
+// NewNodeStreamFromLexer returns a new NodeStream
+// from a lexer that already has a slice of Tokens
 func NewTokenStreamFromLexer(l *Lexer) *TokenStream {
 	ts := NewTokenStream()
 

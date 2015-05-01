@@ -1,7 +1,10 @@
 package blast
 
+// Blocks is a slice of `Block`
 type Blocks []*Block
 
+// ParseCode turns a string of code
+// into a Block
 func ParseCode(code string) *Block {
 	lr := NewLineReader(code)
 	lr.ReadLines()
@@ -10,10 +13,14 @@ func ParseCode(code string) *Block {
 	return bb.Build()
 }
 
+// Add adds a `Block` to the block slice
 func (blocks *Blocks) Add(b *Block) {
 	*blocks = append(*blocks, b)
 }
 
+// Block is a recursive struct to represent sections
+// of code and handle scoping. See block types
+// for more detail
 type Block struct {
 	parent *Block
 	blocks Blocks
@@ -21,22 +28,41 @@ type Block struct {
 	typ    blockType
 }
 
+// BlockBuilder is a struct that turns
+// the lines from a `LineReader` into
+// a block
 type BlockBuilder struct {
 	lr    *LineReader
 	depth int
 	block *Block
 }
 
+// blockType is an int
+// representing a block type
 type blockType int
 
 const (
+	// A single line, independent from other lines.
+	// Ex: `x = 3`
 	blockTypeBasic = iota
+	// An if block, with child line
+	// being its own block
 	blockTypeIf
+	// A function declaration block,
+	// with each child line being
+	// its own block
 	blockTypeFunction
+	// The first block, with each
+	// line being its own block
 	blockTypeMain
+	// A for loop declaration, with
+	// each child line being its
+	// own block
 	blockTypeFor
 )
 
+// lineBlockTypeKey is a map to help
+// create a `Block` from a `Line`
 var lineBlockTypeKey = map[lineType]blockType{
 	lineTypeFunction: blockTypeFunction,
 	lineTypeBasic:    blockTypeBasic,
@@ -45,6 +71,7 @@ var lineBlockTypeKey = map[lineType]blockType{
 	lineTypeFor:      blockTypeFor,
 }
 
+// NewBlock returns a new `Block`
 func NewBlock(parent *Block, line *Line) *Block {
 	b := new(Block)
 	b.parent = parent
@@ -53,6 +80,7 @@ func NewBlock(parent *Block, line *Line) *Block {
 	return b
 }
 
+// NewBlockBuilder returns a new BlockBuilder
 func NewBlockBuilder(lr *LineReader) *BlockBuilder {
 	bb := new(BlockBuilder)
 	bb.lr = lr
@@ -63,6 +91,8 @@ func NewBlockBuilder(lr *LineReader) *BlockBuilder {
 	return bb
 }
 
+// String returns a string representation
+// of a block
 func (b *Block) String() string {
 	str := "\n"
 	switch b.typ {
@@ -83,6 +113,7 @@ func (b *Block) String() string {
 	return str
 }
 
+// Build creates the block structure
 func (bb *BlockBuilder) Build() *Block {
 	for bb.lr.HasNextLine() {
 		line := bb.lr.NextLine()
@@ -101,17 +132,10 @@ func (bb *BlockBuilder) Build() *Block {
 		}
 	}
 
-	// if bb.depth > 0 {
-	// 	log.Fatalf("%d too many ends", bb.depth)
-	// }
-
-	// if bb.depth < 0 {
-	// 	log.Fatal("unclosed block")
-	// }
-
 	return bb.block
 }
 
+// RunBlocks runs each `Block` in the `Block` slice
 func (b *Block) RunBlocks() (Token, bool) {
 	var token Token
 	var returned bool
@@ -125,6 +149,7 @@ func (b *Block) RunBlocks() (Token, bool) {
 	return token, false
 }
 
+// Run executes the line stored in the block
 func (b *Block) Run() (Token, bool) {
 	switch b.typ {
 	case blockTypeBasic:
@@ -145,6 +170,7 @@ func (b *Block) Run() (Token, bool) {
 	return &tokenNil{}, false
 }
 
+// runIfBlock runs an if `Block`
 func runIfBlock(b *Block) (Token, bool) {
 	Scopes.New()
 	ts := b.line.TokenStream()
@@ -159,6 +185,7 @@ func runIfBlock(b *Block) (Token, bool) {
 	return &tokenNil{}, false
 }
 
+// runForBlock runs a for `Block`
 func runForBlock(b *Block) (Token, bool) {
 	Scopes.New()
 	ts := b.line.TokenStream()
@@ -183,6 +210,7 @@ func runForBlock(b *Block) (Token, bool) {
 	return &tokenNil{}, false
 }
 
+// runFuncBlock is currently not a thing
 func runFuncBlock(b *Block) (Token, bool) {
 	return &tokenNil{}, false
 }

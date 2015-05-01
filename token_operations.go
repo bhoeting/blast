@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// AddNodes adds two Nodes into one Node
 func AddTokens(t1 Token, t2 Token) Token {
 	var result Token
 
@@ -17,6 +18,7 @@ func AddTokens(t1 Token, t2 Token) Token {
 	return result
 }
 
+// SubtractNodes subtracts two Nodes into one Node
 func SubtractTokens(t1 Token, t2 Token) Token {
 	if t1.GetType() != tokenTypeString && t2.GetType() != tokenTypeString {
 		return NewNumberFromFloat(NumberFromToken(t1) - NumberFromToken(t2))
@@ -26,6 +28,7 @@ func SubtractTokens(t1 Token, t2 Token) Token {
 	return &tokenNil{}
 }
 
+// MultiplyNodes multiplies two Nodes into one Node
 func MultiplyTokens(t1 Token, t2 Token) Token {
 	if t1.GetType() == tokenTypeString {
 		if t2.GetType() == tokenTypeString {
@@ -46,6 +49,7 @@ func MultiplyTokens(t1 Token, t2 Token) Token {
 	return &tokenNil{}
 }
 
+// RaiseNodes raises n1 to the power of n2 into one Node
 func RaiseTokens(t1 Token, t2 Token) Token {
 	result := 1.0
 	num1, num2 := NumberFromToken(t1), NumberFromToken(t2)
@@ -57,6 +61,8 @@ func RaiseTokens(t1 Token, t2 Token) Token {
 	return NewNumberFromFloat(result)
 }
 
+// AssignNodes assigns the variable represented
+// by n1 to the value represented by n2
 func AssignTokens(t1 Token, t2 Token) Token {
 	if t1.GetType() != tokenTypeVariable {
 		log.Fatalf("Could not assign %v to %v", t2, t1)
@@ -71,6 +77,7 @@ func AssignTokens(t1 Token, t2 Token) Token {
 	return &tokenNil{}
 }
 
+// DivideNodes divides two Nodes into one
 func DivideTokens(t1 Token, t2 Token) Token {
 	if t1.GetType() != tokenTypeString && t2.GetType() != tokenTypeString {
 		return NewNumberFromFloat(NumberFromToken(t1) / NumberFromToken(t2))
@@ -80,6 +87,8 @@ func DivideTokens(t1 Token, t2 Token) Token {
 	return &tokenNil{}
 }
 
+// CompareNodes compares two Nodes opNode and returns a
+// Boolean Node
 func CompareTokens(t1 Token, t2 Token, tokOp Token) Token {
 	var result bool
 	var num1, num2 float64
@@ -90,6 +99,8 @@ func CompareTokens(t1 Token, t2 Token, tokOp Token) Token {
 		log.Fatalf("Cannot compare with operator %v", tokOp)
 	}
 
+	// If the operator is not == or != then get
+	// the numerical values from the Nodes
 	if op.typ != opTypeEqualTo && op.typ != opTypeNotEqualTo {
 		num1, num2 = NumberFromToken(t1), NumberFromToken(t2)
 	}
@@ -107,6 +118,7 @@ func CompareTokens(t1 Token, t2 Token, tokOp Token) Token {
 		result = num1 > num2
 	case opTypeGreaterThanOrEqualTo:
 		result = num1 >= num2
+	// TODO: make these their own operation category
 	case opTypeAnd:
 		result = num1 != 0.0 && num2 != 0.0
 	case opTypeOr:
@@ -116,6 +128,7 @@ func CompareTokens(t1 Token, t2 Token, tokOp Token) Token {
 	return NewBooleanFromBool(result)
 }
 
+// tokenIsEqual compares two Nodes and determine if they're equal
 func tokenIsEqualTo(t1 Token, t2 Token) bool {
 	if t1.GetType() == tokenTypeString || t2.GetType() == tokenTypeString {
 		if t1.GetType() != t2.GetType() {
