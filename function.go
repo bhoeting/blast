@@ -5,7 +5,7 @@ import "fmt"
 // Function is an interface
 // with a call method
 type Function interface {
-	Call(args *TokenStream) Token
+	Call(args *NodeStream) Node
 }
 
 // funcNil is returned when there
@@ -27,12 +27,12 @@ type UserFunction struct {
 // definition parameter
 type Param struct {
 	name  string
-	value Token
+	value Node
 }
 
-// goFunc is a func type with a TokenStream
+// goFunc is a func type with a NodeStream
 // parameter that returns an interface
-type goFunc func(args *TokenStream) interface{}
+type goFunc func(args *NodeStream) interface{}
 
 // BuilinFunction is a struct represeting
 // a function built in to Blast that
@@ -42,8 +42,8 @@ type BuiltinFunction struct {
 }
 
 // Call runs a UserFunction and returns the
-// result as a Token
-func (f *UserFunction) Call(args *TokenStream) Token {
+// result as a odSe
+func (f *UserFunction) Call(args *NodeStream) Node {
 	Scopes.New()
 
 	for _, param := range f.params {
@@ -60,17 +60,17 @@ func (f *UserFunction) Call(args *TokenStream) Token {
 	return result
 }
 
-// Call runs a BuiltinFunction and returns the result as a Token
-func (bf *BuiltinFunction) Call(args *TokenStream) Token {
+// Call runs a BuiltinFunction and returns the result as a Node
+func (bf *BuiltinFunction) Call(args *NodeStream) Node {
 	result := bf.f(args)
 
 	if result == nil {
-		return &tokenNil{}
+		return &nodeNil{}
 	}
 
 	switch result.(type) {
-	case Token:
-		return result.(Token)
+	case Node:
+		return result.(Node)
 	case float64:
 		return NewNumberFromFloat(result.(float64))
 	case string:
@@ -79,29 +79,29 @@ func (bf *BuiltinFunction) Call(args *TokenStream) Token {
 		return NewBooleanFromBool(result.(bool))
 	}
 
-	return &tokenNil{}
+	return &nodeNil{}
 }
 
-// ParseUserFunction parses a TokenStream into a user
+// ParseUserFunction parses a NodeStream into a user
 // function definition
-func ParseUserFunction(ts *TokenStream) *UserFunction {
+func ParseUserFunction(ns *NodeStream) *UserFunction {
 	parenDepth := 1
 	f := new(UserFunction)
-	paramTS := NewTokenStream()
+	paramns := NewNodeStream()
 
 	// Skip the "function"
-	ts.Next()
+	ns.Next()
 
 	// Set the name
-	f.name = ts.Next().(*FunctionCall).name
+	f.name = ns.Next().(*FunctionCall).name
 
 	// Skip the first paren
-	ts.Next()
+	ns.Next()
 
-	for ts.HasNext() {
-		token := ts.Next()
-		if token.GetType() == tokenTypeParen {
-			switch paren := token.(*Paren); paren.typ {
+	for ns.HasNext() {
+		node := ns.Next()
+		if node.GetType() == nodeTypeParen {
+			switch paren := node.(*Paren); paren.typ {
 			case parenTypeOpen:
 				parenDepth++
 			case parenTypeClose:
@@ -110,43 +110,43 @@ func ParseUserFunction(ts *TokenStream) *UserFunction {
 		}
 
 		if parenDepth == 0 {
-			if paramTS.Length() > 0 {
-				f.params = append(f.params, ParseParam(paramTS))
+			if paramns.Length() > 0 {
+				f.params = append(f.params, ParseParam(paramns))
 			}
 			break
 		}
 
-		if token.GetType() == tokenTypeComma {
-			f.params = append(f.params, ParseParam(paramTS))
-			paramTS = NewTokenStream()
+		if node.GetType() == nodeTypeComma {
+			f.params = append(f.params, ParseParam(paramns))
+			paramns = NewNodeStream()
 		} else {
-			paramTS.Push(token)
+			paramns.Push(node)
 		}
 	}
 
 	return f
 }
 
-// ParseParam parses a TokenStream into
+// ParseParam parses a NodeStream into
 // a parameter
-func ParseParam(ts *TokenStream) *Param {
+func ParseParam(ns *NodeStream) *Param {
 	param := new(Param)
 
-	if ts.Length() == 1 {
+	if ns.Length() == 1 {
 		return &Param{
-			name:  ts.Next().String(),
-			value: &tokenNil{},
+			name:  ns.Next().String(),
+			value: &nodeNil{},
 		}
 	}
 
-	param.name = ts.Next().String()
+	param.name = ns.Next().String()
 
-	if ts.Peek().GetType() == tokenTypeOperator &&
-		ts.Peek().(*Operator).typ == opTypeAssignment {
-		ts.Next()
+	if ns.Peek().GetType() == nodeTypeOperator &&
+		ns.Peek().(*Operator).typ == opTypeAssignment {
+		ns.Next()
 	}
 
-	param.value = ts.Chop().Evaluate()
+	param.value = ns.Chop().Evaluate()
 	return param
 }
 
@@ -165,12 +165,12 @@ func LoadBuiltinFunctions() {
 	SetFunc("modulus", NewBuiltinFunc(builtinModulus))
 }
 
-// builtinPrint prints the Nodes
-func builtinPrint(args *TokenStream) interface{} {
+// builtinPrint prinns the Nodes
+func builtinPrint(args *NodeStream) interface{} {
 	str := ""
 
-	for _, token := range args.tokens {
-		str += StringFromToken(token) + " "
+	for _, node := range args.nodes {
+		str += StringFromNode(node) + " "
 	}
 
 	str = str[:len(str)-1]
@@ -179,12 +179,12 @@ func builtinPrint(args *TokenStream) interface{} {
 	return nil
 }
 
-// builtinPrint prints the Nodes on their own line
-func builtinPrintln(args *TokenStream) interface{} {
+// builtinPrint prinns the Nodes on their own line
+func builtinPrintln(args *NodeStream) interface{} {
 	str := ""
 
-	for _, token := range args.tokens {
-		str += StringFromToken(token) + " "
+	for _, node := range args.nodes {
+		str += StringFromNode(node) + " "
 	}
 
 	if len(str) > 0 {
@@ -197,6 +197,6 @@ func builtinPrintln(args *TokenStream) interface{} {
 
 // builtinModulus performs the modulus operation on two Nodes.
 // TODO: make this an operator
-func builtinModulus(args *TokenStream) interface{} {
-	return float64(int(NumberFromToken(args.Next())) % int(NumberFromToken(args.Next())))
+func builtinModulus(args *NodeStream) interface{} {
+	return float64(int(Float64FromNode(args.Next())) % int(Float64FromNode(args.Next())))
 }

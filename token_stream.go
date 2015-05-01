@@ -3,177 +3,177 @@ package blast
 // NodeStream is a Node slice
 // wrapper with stack and
 // queue funcitonality
-type TokenStream struct {
-	pos    int
-	size   int
-	tokens []Token
+type NodeStream struct {
+	pos   int
+	size  int
+	nodes []Node
 }
 
 // Push adds a Node to the NodeStream
-func (ts *TokenStream) Push(t Token) Token {
-	ts.tokens = append(ts.tokens, t)
-	ts.size++
+func (ns *NodeStream) Push(t Node) Node {
+	ns.nodes = append(ns.nodes, t)
+	ns.size++
 	return t
 }
 
 // Pop removes and returns the Node
 // at the top of the NodeStream
-func (ts *TokenStream) Pop() Token {
-	ts.size--
-	t := ts.tokens[ts.size]
-	ts.tokens = ts.tokens[:ts.size]
-	return t
+func (ns *NodeStream) Pop() Node {
+	ns.size--
+	n := ns.nodes[ns.size]
+	ns.nodes = ns.nodes[:ns.size]
+	return n
 }
 
 // Top returns the Node at the
 // top of the NodeStream
-func (ts *TokenStream) Top() Token {
-	if ts.size-1 < 0 {
-		return &tokenNil{}
+func (ns *NodeStream) Top() Node {
+	if ns.size-1 < 0 {
+		return &nodeNil{}
 	}
 
-	t := ts.tokens[ts.size-1]
-	return t
+	n := ns.nodes[ns.size-1]
+	return n
 }
 
 // RemoveLast removes the first Node
 // from a NodeStream
-func (ts *TokenStream) RemoveLast() Token {
-	ts.size--
-	t := ts.tokens[0]
-	ts.tokens = ts.tokens[1:]
-	return t
+func (ns *NodeStream) RemoveLast() Node {
+	ns.size--
+	n := ns.nodes[0]
+	ns.nodes = ns.nodes[1:]
+	return n
 }
 
 // Length returns the length of a
 // NodeStream
-func (ts *TokenStream) Length() int {
-	return ts.size
+func (ns *NodeStream) Length() int {
+	return ns.size
 }
 
 // HasNext determines if there is
 // another node to return from
 // the NodeStream
-func (ts *TokenStream) HasNext() bool {
-	return ts.pos < ts.size
+func (ns *NodeStream) HasNext() bool {
+	return ns.pos < ns.size
 }
 
 // Next returns the next node
 // from the NodeStream
-func (ts *TokenStream) Next() Token {
-	if ts.pos >= ts.size {
-		return &tokenNil{}
+func (ns *NodeStream) Next() Node {
+	if ns.pos >= ns.size {
+		return &nodeNil{}
 	}
 
-	token := ts.tokens[ts.pos]
-	ts.pos++
-	return token
+	node := ns.nodes[ns.pos]
+	ns.pos++
+	return node
 }
 
-// Backup decrements the position
+// Backup decremenns the position
 // in the NodeStream
-func (ts *TokenStream) Backup() *TokenStream {
-	ts.pos--
-	return ts
+func (ns *NodeStream) Backup() *NodeStream {
+	ns.pos--
+	return ns
 }
 
 // Peek returns the next Node without
 // incrementing the position
-func (ts *TokenStream) Peek() Token {
-	t := ts.Next()
-	ts.Backup()
-	return t
+func (ns *NodeStream) Peek() Node {
+	n := ns.Next()
+	ns.Backup()
+	return n
 }
 
-// Evaluate converts the NodeStream
+// Evaluate converns the NodeStream
 // to RPN notation and evaluates it
-func (ts *TokenStream) Evaluate() Token {
-	rpn := NewTokenStreamInRPN(ts)
+func (ns *NodeStream) Evaluate() Node {
+	rpn := NewNodeStreamInRPN(ns)
 	return EvaluateRPN(rpn)
 }
 
 // String returns a string representation
 // of the NodeStream
-func (ts *TokenStream) String() string {
+func (ns *NodeStream) String() string {
 	str := ""
 
-	for _, token := range ts.tokens {
-		str += token.String() + " "
+	for _, node := range ns.nodes {
+		str += node.String() + " "
 	}
 
 	return str
 }
 
 // NewNodeStream returns a new NodeStream
-func NewTokenStream() *TokenStream {
-	ts := new(TokenStream)
-	return ts
+func NewNodeStream() *NodeStream {
+	ns := new(NodeStream)
+	return ns
 }
 
 // Chop returns a new NodeStream from
 // containing all the Nodes starting at the
 // position of the current NodeStream
-func (ts *TokenStream) Chop() *TokenStream {
-	newTS := NewTokenStream()
+func (ns *NodeStream) Chop() *NodeStream {
+	newns := NewNodeStream()
 
-	for ts.HasNext() {
-		newTS.Push(ts.Next())
+	for ns.HasNext() {
+		newns.Push(ns.Next())
 	}
 
-	return newTS
+	return newns
 }
 
 // Reverse reverses the order
 // of the Nodes in the NodeStream
-func (ts *TokenStream) Reverse() {
-	reversed := NewTokenStream()
+func (ns *NodeStream) Reverse() {
+	reversed := NewNodeStream()
 
-	for len(ts.tokens) != 0 {
-		token := ts.Pop()
-		reversed.Push(token)
+	for len(ns.nodes) != 0 {
+		node := ns.Pop()
+		reversed.Push(node)
 	}
 
-	ts.tokens = reversed.tokens
-	ts.size = reversed.size
+	ns.nodes = reversed.nodes
+	ns.size = reversed.size
 }
 
-// Reset sets the position to
+// Reset sens the position to
 // zero so Nodes can be returned
 // from it again with Next()
-func (ts *TokenStream) Reset() {
-	ts.pos = 0
+func (ns *NodeStream) Reset() {
+	ns.pos = 0
 }
 
 // NewNodeStreamFromLexer returns a new NodeStream
 // from a lexer that already has a slice of Tokens
-func NewTokenStreamFromLexer(l *Lexer) *TokenStream {
-	ts := NewTokenStream()
+func NewNodeStreamFromLexer(l *Lexer) *NodeStream {
+	ns := NewNodeStream()
 
 	for l.HasNextItem() {
 		switch item := l.NextItem(); item.typ {
-		case itemTypeNum:
-			ts.Push(NewNumber(item.text))
-		case itemTypeBool:
-			ts.Push(NewBoolean(item.text))
-		case itemTypeString:
-			ts.Push(NewString(item.text))
-		case itemTypeOperator:
-			ts.Push(NewOperator(item.text))
-		case itemTypeOpenParen, itemTypeCloseParen:
-			ts.Push(NewParen(item.text))
-		case itemTypeComma:
-			ts.Push(NewComma())
-		case itemTypeIdentifier:
-			if l.HasNextItem() && l.PeekItem().typ == itemTypeOpenParen {
-				ts.Push(NewFunctionCall(item.text))
+		case tokenTypeNum:
+			ns.Push(NewNumber(item.text))
+		case tokenTypeBool:
+			ns.Push(NewBoolean(item.text))
+		case tokenTypeString:
+			ns.Push(NewString(item.text))
+		case tokenTypeOperator:
+			ns.Push(NewOperator(item.text))
+		case tokenTypeOpenParen, tokenTypeCloseParen:
+			ns.Push(NewParen(item.text))
+		case tokenTypeComma:
+			ns.Push(NewComma())
+		case tokenTypeIdentifier:
+			if l.HasNextItem() && l.PeekItem().typ == tokenTypeOpenParen {
+				ns.Push(NewFunctionCall(item.text))
 			} else {
-				ts.Push(NewVariable(item.text))
+				ns.Push(NewVariable(item.text))
 			}
 		default:
-			ts.Push(NewReserved())
+			ns.Push(NewReserved())
 		}
 	}
 
-	l.itemPos = 0
-	return ts
+	l.tokenPos = 0
+	return ns
 }

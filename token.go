@@ -8,29 +8,29 @@ import (
 
 // Node is an interface
 // for types created
-// from Tokens
-type Token interface {
-	GetType() tokenType
+// from nodes
+type Node interface {
+	GetType() nodeType
 	String() string
 }
 
 // nodeType is an int
 // representation of a
 // node type
-type tokenType int
+type nodeType int
 
 const (
-	tokenTypeUnkown = iota
-	tokenTypeFuncCall
-	tokenTypeVariable
-	tokenTypeNumber
-	tokenTypeString
-	tokenTypeParen
-	tokenTypeBoolean
-	tokenTypeOperator
-	tokenTypeComma
-	tokenTypeArgCount
-	tokenTypeReserved
+	nodeTypeUnkown = iota
+	nodeTypeFuncCall
+	nodeTypeVariable
+	nodeTypeNumber
+	nodeTypeString
+	nodeTypeParen
+	nodeTypeBoolean
+	nodeTypeOperator
+	nodeTypeComma
+	nodeTypeArgCount
+	nodeTypeReserved
 )
 
 // Operator is a struct
@@ -102,9 +102,9 @@ var operatorStrings = map[opType]string{
 	opTypeArrow:                "->",
 }
 
-// GetType returns tokenTypeOperator
-func (o *Operator) GetType() tokenType {
-	return tokenTypeOperator
+// GetType returns nodeTypeOperator
+func (o *Operator) GetType() nodeType {
+	return nodeTypeOperator
 }
 
 // String returns an Operator as a string
@@ -130,9 +130,9 @@ type Number struct {
 	value float64
 }
 
-// GetType returns tokenTypeNumber
-func (n *Number) GetType() tokenType {
-	return tokenTypeNumber
+// GetType returns nodeTypeNumber
+func (n *Number) GetType() nodeType {
+	return nodeTypeNumber
 }
 
 // String returns a Number as a string
@@ -175,9 +175,9 @@ const (
 	booleanTypeFalse
 )
 
-// GetType returns tokenTypeBoolean
-func (b *Boolean) GetType() tokenType {
-	return tokenTypeBoolean
+// GetType returns nodeTypeBoolean
+func (b *Boolean) GetType() nodeType {
+	return nodeTypeBoolean
 }
 
 // String returns a Boolean as a string
@@ -236,9 +236,9 @@ const (
 	parenTypeNil
 )
 
-// GetType returns tokenTypeParen
-func (p *Paren) GetType() tokenType {
-	return tokenTypeParen
+// GetType returns nodeTypeParen
+func (p *Paren) GetType() nodeType {
+	return nodeTypeParen
 }
 
 // String returns a Paren as a string
@@ -273,9 +273,9 @@ type String struct {
 	value string
 }
 
-// GetType returns tokenTypeString
-func (s *String) GetType() tokenType {
-	return tokenTypeString
+// GetType returns nodeTypeString
+func (s *String) GetType() nodeType {
+	return nodeTypeString
 }
 
 // String returns the string wrapped in quotes
@@ -297,9 +297,9 @@ type FunctionCall struct {
 	name string
 }
 
-// GetType returns tokenTypeFuncCall
-func (f *FunctionCall) GetType() tokenType {
-	return tokenTypeFuncCall
+// GetType returns nodeTypeFuncCall
+func (f *FunctionCall) GetType() nodeType {
+	return nodeTypeFuncCall
 }
 
 // String returns the func name with parens
@@ -319,12 +319,12 @@ func NewFunctionCall(strName string) *FunctionCall {
 // stores a name and Node
 type Variable struct {
 	name  string
-	value Token
+	value Node
 }
 
-// GetType returns tokenTypeVariable
-func (v *Variable) GetType() tokenType {
-	return tokenTypeVariable
+// GetType returns nodeTypeVariable
+func (v *Variable) GetType() nodeType {
+	return nodeTypeVariable
 }
 
 // String returns the variable name
@@ -347,9 +347,9 @@ func NewComma() *Comma {
 	return new(Comma)
 }
 
-// GetType returns tokenTypeComma
-func (c *Comma) GetType() tokenType {
-	return tokenTypeComma
+// GetType returns nodeTypeComma
+func (c *Comma) GetType() nodeType {
+	return nodeTypeComma
 }
 
 // String returns a `,`
@@ -357,16 +357,16 @@ func (c *Comma) String() string {
 	return ","
 }
 
-// tokenNil is used for undefined behavior
-type tokenNil struct{}
+// nodeNil is used for undefined behavior
+type nodeNil struct{}
 
-// GetType returns tokenTypeUnknown
-func (n *tokenNil) GetType() tokenType {
-	return tokenTypeUnkown
+// GetType returns nodeTypeUnknown
+func (n *nodeNil) GetType() nodeType {
+	return nodeTypeUnkown
 }
 
 // String returns <NIL>
-func (n *tokenNil) String() string {
+func (n *nodeNil) String() string {
 	return "<NIL>"
 }
 
@@ -376,9 +376,9 @@ func (n *tokenNil) String() string {
 // function
 type ArgCount int
 
-// GetType returns a tokenTypeArgCount
-func (a ArgCount) GetType() tokenType {
-	return tokenTypeArgCount
+// GetType returns a nodeTypeArgCount
+func (a ArgCount) GetType() nodeType {
+	return nodeTypeArgCount
 }
 
 // String returns the ArgCount as a string
@@ -398,9 +398,9 @@ type Reserved struct {
 	value string
 }
 
-// GetType returns tokenTypeReserved
-func (r *Reserved) GetType() tokenType {
-	return tokenTypeReserved
+// GetType returns nodeTypeReserved
+func (r *Reserved) GetType() nodeType {
+	return nodeTypeReserved
 }
 
 // String returns <RESERVED>
@@ -414,55 +414,55 @@ func NewReserved() *Reserved {
 	return &Reserved{}
 }
 
-// NumberFromToken returns a float64
+// NumberFromNode returns a float64
 // from a Node
-func NumberFromToken(token Token) float64 {
-	switch token.GetType() {
-	case tokenTypeNumber:
-		return token.(*Number).value
-	case tokenTypeBoolean:
-		switch token.(*Boolean).typ {
+func Float64FromNode(node Node) float64 {
+	switch node.GetType() {
+	case nodeTypeNumber:
+		return node.(*Number).value
+	case nodeTypeBoolean:
+		switch node.(*Boolean).typ {
 		case booleanTypeTrue:
 			return 1.0
 		case booleanTypeFalse:
 			return 0.0
 		}
 	default:
-		log.Fatalf("Could not get numerical value from %v", token)
+		log.Fatalf("Could not get numerical value from %v", node)
 	}
 	return 0.0
 }
 
-// StringFromToken returns a string a Node
-func StringFromToken(token Token) string {
-	switch token.GetType() {
-	case tokenTypeNumber, tokenTypeBoolean:
-		return token.String()
-	case tokenTypeString:
-		return token.(*String).value
+// StringFromNode returns a string a Node
+func StringFromNode(node Node) string {
+	switch node.GetType() {
+	case nodeTypeNumber, nodeTypeBoolean:
+		return node.String()
+	case nodeTypeString:
+		return node.(*String).value
 	}
 
-	log.Fatalf("Could not get string from %v", token)
+	log.Fatalf("Could not get string from %v", node)
 	return ""
 }
 
-// BooleanFromToken returns a bool from a Node
-func BooleanFromToken(token Token) bool {
-	switch token.GetType() {
-	case tokenTypeBoolean:
-		switch token.(*Boolean).typ {
+// BooleanFromNode returns a bool from a Node
+func BooleanFromNode(node Node) bool {
+	switch node.GetType() {
+	case nodeTypeBoolean:
+		switch node.(*Boolean).typ {
 		case booleanTypeTrue:
 			return true
 		case booleanTypeFalse:
 			return false
 		}
-	case tokenTypeNumber:
-		if token.(*Number).value == 0.0 {
+	case nodeTypeNumber:
+		if node.(*Number).value == 0.0 {
 			return false
 		}
 		return true
 	}
 
-	log.Fatalf("Could not get boolean value from %v", token)
+	log.Fatalf("Could not get boolean value from %v", node)
 	return false
 }

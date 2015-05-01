@@ -11,7 +11,7 @@ var (
 // Scope stores a map of Nodes
 // and a map of Functions
 type Scope struct {
-	vars  map[string]Token
+	vars  map[string]Node
 	funcs map[string]Function
 }
 
@@ -44,12 +44,12 @@ func CurrScope() *Scope {
 }
 
 // SetVar sets a variable on the current scope
-func SetVar(name string, token Token) {
-	Scopes.scopes[Scopes.size-1].SetVar(name, token)
+func SetVar(name string, node Node) {
+	Scopes.scopes[Scopes.size-1].SetVar(name, node)
 }
 
 // GetVar gets a variable from the current scope
-func GetVar(name string) (Token, error) {
+func GetVar(name string) (Node, error) {
 	return Scopes.scopes[Scopes.size-1].GetVar(name)
 }
 
@@ -92,23 +92,23 @@ func (err *ErrFuncNotFound) Error() string {
 // NewScope returns a new Scope
 func NewScope() *Scope {
 	s := new(Scope)
-	s.vars = make(map[string]Token)
+	s.vars = make(map[string]Node)
 	s.funcs = make(map[string]Function)
 	return s
 }
 
 // SetVar sets a variable on the Scope
-func (s *Scope) SetVar(name string, value Token) {
+func (s *Scope) SetVar(name string, value Node) {
 	s.vars[name] = value
 }
 
 // GetVar gets a variable from the Scope
-func (s *Scope) GetVar(name string) (Token, error) {
+func (s *Scope) GetVar(name string) (Node, error) {
 	if v, ok := s.vars[name]; ok {
 		return v, nil
 	}
 
-	return &tokenNil{}, &ErrVarNotFound{name}
+	return &nodeNil{}, &ErrVarNotFound{name}
 }
 
 // GetFunc returns the function from the Scope
@@ -170,9 +170,9 @@ func (st *ScopeStack) Pop() *Scope {
 	// Move any variables that could
 	// have been modified to the
 	// new current Scope
-	for name, token := range top.vars {
+	for name, node := range top.vars {
 		if _, ok := curr.vars[name]; ok {
-			curr.vars[name] = token
+			curr.vars[name] = node
 		}
 	}
 

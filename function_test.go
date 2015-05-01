@@ -7,7 +7,7 @@ import (
 )
 
 func TestFunctionParsing(t *testing.T) {
-	f := ParseUserFunction(NewTokenStreamFromLexer(
+	f := ParseUserFunction(NewNodeStreamFromLexer(
 		Lex("function max(x = 200, y, z = .9 * (44.4 + 14))")))
 
 	assert.Equal(t, "max", f.name)
@@ -16,7 +16,7 @@ func TestFunctionParsing(t *testing.T) {
 	assert.Equal(t, NewNumberFromFloat(200.0), f.params[0].value.(*Number))
 
 	assert.Equal(t, "y", f.params[1].name)
-	assert.IsType(t, &tokenNil{}, f.params[1].value)
+	assert.IsType(t, &nodeNil{}, f.params[1].value)
 
 	assert.Equal(t, "z", f.params[2].name)
 	assert.Equal(t, NewNumberFromFloat(52.56), f.params[2].value.(*Number))

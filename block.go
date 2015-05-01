@@ -50,7 +50,7 @@ const (
 	blockTypeIf
 	// A function declaration block,
 	// with each child line being
-	// its own block
+	// ins own block
 	blockTypeFunction
 	// The first block, with each
 	// line being its own block
@@ -136,27 +136,27 @@ func (bb *BlockBuilder) Build() *Block {
 }
 
 // RunBlocks runs each `Block` in the `Block` slice
-func (b *Block) RunBlocks() (Token, bool) {
-	var token Token
+func (b *Block) RunBlocks() (Node, bool) {
+	var node Node
 	var returned bool
 
 	for _, block := range b.blocks {
-		token, returned = block.Run()
+		node, returned = block.Run()
 		if returned {
-			return token, true
+			return node, true
 		}
 	}
-	return token, false
+	return node, false
 }
 
 // Run executes the line stored in the block
-func (b *Block) Run() (Token, bool) {
+func (b *Block) Run() (Node, bool) {
 	switch b.typ {
 	case blockTypeBasic:
 		if b.line.typ == lineTypeReturn {
-			ts := b.line.TokenStream()
-			ts.Next()
-			return ts.Chop().Evaluate(), true
+			ns := b.line.NodeStream()
+			ns.Next()
+			return ns.Chop().Evaluate(), true
 		}
 		return b.line.Run(), false
 	case blockTypeIf:
@@ -167,29 +167,29 @@ func (b *Block) Run() (Token, bool) {
 		return runForBlock(b)
 	}
 
-	return &tokenNil{}, false
+	return &nodeNil{}, false
 }
 
 // runIfBlock runs an if `Block`
-func runIfBlock(b *Block) (Token, bool) {
+func runIfBlock(b *Block) (Node, bool) {
 	Scopes.New()
-	ts := b.line.TokenStream()
-	ts.Next()
-	condition := ts.Chop()
+	ns := b.line.NodeStream()
+	ns.Next()
+	condition := ns.Chop()
 
-	if BooleanFromToken(condition.Evaluate()) {
+	if BooleanFromNode(condition.Evaluate()) {
 		return b.RunBlocks()
 	}
 
 	Scopes.Pop()
-	return &tokenNil{}, false
+	return &nodeNil{}, false
 }
 
 // runForBlock runs a for `Block`
-func runForBlock(b *Block) (Token, bool) {
+func runForBlock(b *Block) (Node, bool) {
 	Scopes.New()
-	ts := b.line.TokenStream()
-	fd := ParseForDeclaration(ts)
+	ns := b.line.NodeStream()
+	fd := ParseForDeclaration(ns)
 
 	if fd.step == 0 {
 		if fd.start < fd.end {
@@ -201,16 +201,16 @@ func runForBlock(b *Block) (Token, bool) {
 
 	for i := fd.start; i <= fd.end; i += fd.step {
 		SetVar(fd.counter.name, NewNumberFromFloat(i))
-		if token, returned := b.RunBlocks(); returned {
-			return token, true
+		if node, returned := b.RunBlocks(); returned {
+			return node, true
 		}
 	}
 
 	Scopes.Pop()
-	return &tokenNil{}, false
+	return &nodeNil{}, false
 }
 
 // runFuncBlock is currently not a thing
-func runFuncBlock(b *Block) (Token, bool) {
-	return &tokenNil{}, false
+func runFuncBlock(b *Block) (Node, bool) {
+	return &nodeNil{}, false
 }

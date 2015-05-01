@@ -22,10 +22,10 @@ type Lexer struct {
 	pos        int
 	width      int
 	parenDepth int
-	itemPos    int
+	tokenPos   int
 	text       string
 	curr       string
-	items      []*Item
+	tokens     []*Token
 }
 
 // lexerFn is a recursive func type
@@ -34,15 +34,15 @@ type lexerFn func(l *Lexer) lexerFn
 
 // Item is lexed from a string,
 // precursor to a token.
-type Item struct {
+type Token struct {
 	typ  itemType
 	pos  int
 	text string
 }
 
 // NewItem returns a new Item
-func NewItem(text string, pos int, typ itemType) *Item {
-	item := new(Item)
+func NewToken(text string, pos int, typ itemType) *Token {
+	item := new(Token)
 	item.pos = pos
 	item.text = text
 	item.typ = typ
@@ -51,7 +51,7 @@ func NewItem(text string, pos int, typ itemType) *Item {
 
 // String returns a string representation
 // of an Item
-func (i *Item) String() string {
+func (i *Token) String() string {
 	return fmt.Sprintf("%s", i.text)
 }
 
@@ -60,42 +60,42 @@ func (i *Item) String() string {
 type itemType int
 
 const (
-	itemTypeEOF = iota
-	itemTypeNum
-	itemTypeBool
-	itemTypeString
-	itemTypeOperator
-	itemTypeIdentifier
-	itemTypeOpenParen
-	itemTypeCloseParen
-	itemTypeComma
-	itemTypeIf
-	itemTypeFunction
-	itemTypeElse
-	itemTypeReturn
+	tokenTypeTypeEOF = iota
+	tokenTypeNum
+	tokenTypeBool
+	tokenTypeString
+	tokenTypeOperator
+	tokenTypeIdentifier
+	tokenTypeOpenParen
+	tokenTypeCloseParen
+	tokenTypeComma
+	tokenTypeIf
+	tokenTypeFunction
+	tokenTypeElse
+	tokenTypeReturn
 	itemTypeEnd
-	itemTypeFor
+	tokenTypeEnd
 )
 
 // String returns a string representation
 // of an itemType
 func (typ itemType) String() string {
 	switch typ {
-	case itemTypeNum:
+	case tokenTypeNum:
 		return "Number"
-	case itemTypeBool:
+	case tokenTypeBool:
 		return "Bool"
-	case itemTypeString:
+	case tokenTypeString:
 		return "String"
-	case itemTypeOperator:
+	case tokenTypeOperator:
 		return "Operator"
-	case itemTypeComma:
+	case tokenTypeComma:
 		return "Comma"
-	case itemTypeOpenParen:
+	case tokenTypeOpenParen:
 		return "Open paren"
-	case itemTypeCloseParen:
+	case tokenTypeCloseParen:
 		return "Close paren"
-	case itemTypeIdentifier:
+	case tokenTypeIdentifier:
 		return "Identifier"
 	}
 
@@ -106,8 +106,8 @@ var (
 	// itemEOF is an item that is
 	// returned when undefined
 	// behavior occurs.
-	itemEOF = &Item{
-		typ:  itemTypeEOF,
+	itemEOF = &Token{
+		typ:  tokenTypeTypeEOF,
 		pos:  -1,
 		text: "<NULL>",
 	}
@@ -116,14 +116,14 @@ var (
 	// a reserved itemType from
 	// a reserved word
 	reservedKey = map[string]itemType{
-		"if":       itemTypeIf,
-		"else":     itemTypeElse,
-		"true":     itemTypeBool,
-		"false":    itemTypeBool,
-		"return":   itemTypeReturn,
-		"function": itemTypeFunction,
+		"if":       tokenTypeIf,
+		"else":     tokenTypeElse,
+		"true":     tokenTypeBool,
+		"false":    tokenTypeBool,
+		"return":   tokenTypeReturn,
+		"function": tokenTypeFunction,
 		"end":      itemTypeEnd,
-		"for":      itemTypeFor,
+		"for":      tokenTypeEnd,
 	}
 )
 
@@ -144,7 +144,7 @@ func NewLexer(text string) *Lexer {
 func (l *Lexer) String() string {
 	str := ""
 
-	for _, item := range l.items {
+	for _, item := range l.tokens {
 		str += item.String()
 	}
 
@@ -175,17 +175,17 @@ func (l *Lexer) Lex() lexerFn {
 		// Lex open paren
 		case '(':
 			l.Consume(l.Next())
-			l.PushItem(itemTypeOpenParen)
+			l.PushItem(tokenTypeOpenParen)
 			return l.Lex()
 		// Lex close paren
 		case ')':
 			l.Consume(l.Next())
-			l.PushItem(itemTypeCloseParen)
+			l.PushItem(tokenTypeCloseParen)
 			return l.Lex()
 		// Lex comma
 		case ',':
 			l.Consume(l.Next())
-			l.PushItem(itemTypeComma)
+			l.PushItem(tokenTypeComma)
 			return l.Lex()
 		}
 
@@ -262,7 +262,7 @@ func (l *Lexer) LexNumber() lexerFn {
 		return l.LexOperator()
 	}
 
-	l.PushItem(itemTypeNum)
+	l.PushItem(tokenTypeNum)
 	return l.Lex()
 }
 
@@ -276,7 +276,7 @@ func (l *Lexer) LexOperator() lexerFn {
 		l.Errorf("Invalid operator %s", l.curr)
 	}
 
-	l.PushItem(itemTypeOperator)
+	l.PushItem(tokenTypeOperator)
 	return l.Lex()
 }
 
@@ -287,7 +287,7 @@ func (l *Lexer) LexString() lexerFn {
 		return r != '"'
 	})
 
-	l.PushItem(itemTypeString)
+	l.PushItem(tokenTypeString)
 	l.Next()
 	return l.Lex()
 }
@@ -323,8 +323,8 @@ func (l *Lexer) Stop() lexerFn {
 // PushItem adds an item to the lexer's
 // `Item` slice
 func (l *Lexer) PushItem(typ itemType) *Lexer {
-	item := NewItem(l.curr, l.pos, typ)
-	l.items = append(l.items, item)
+	item := NewToken(l.curr, l.pos, typ)
+	l.tokens = append(l.tokens, item)
 	l.curr = ""
 	return l
 }
@@ -397,26 +397,26 @@ func (l *Lexer) Flush() *Lexer {
 
 // NextItem returns the next item
 // from the `Item` slice
-func (l *Lexer) NextItem() *Item {
+func (l *Lexer) NextItem() *Token {
 	if !l.HasNextItem() {
 		return itemEOF
 	}
 
-	item := l.items[l.itemPos]
-	l.itemPos++
+	item := l.tokens[l.tokenPos]
+	l.tokenPos++
 	return item
 }
 
 // PeekItem returns the next item
 // without incrementing the position
-func (l *Lexer) PeekItem() *Item {
+func (l *Lexer) PeekItem() *Token {
 	i := l.NextItem()
 	l.BackupItem()
 	return i
 }
 
 // FirstItem returns the first item
-func (l *Lexer) FirstItem() *Item {
+func (l *Lexer) FirstItem() *Token {
 	if !l.HasNextItem() {
 		return itemEOF
 	}
@@ -429,14 +429,14 @@ func (l *Lexer) FirstItem() *Item {
 
 // BackupItem decrements the item position
 func (l *Lexer) BackupItem() *Lexer {
-	l.itemPos--
+	l.tokenPos--
 	return l
 }
 
 // HasNextItem determines there is
 // an Item to return
 func (l *Lexer) HasNextItem() bool {
-	return l.itemPos < len(l.items)
+	return l.tokenPos < len(l.tokens)
 }
 
 // Errorf reports a lexing error
@@ -452,7 +452,7 @@ func parseItemTypeFromString(text string) itemType {
 		return typ
 	}
 
-	return itemTypeIdentifier
+	return tokenTypeIdentifier
 }
 
 // isOperator determines if a sequence

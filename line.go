@@ -27,13 +27,13 @@ var (
 	// itemLineKey is used to determine
 	// a line type based on the first
 	// Token
-	itemLineKey = map[itemType]lineType{
-		itemTypeEnd:      lineTypeEnd,
-		itemTypeIf:       lineTypeIf,
-		itemTypeElse:     lineTypeElse,
-		itemTypeFor:      lineTypeFor,
-		itemTypeFunction: lineTypeFunction,
-		itemTypeReturn:   lineTypeReturn,
+	tokenLineKey = map[itemType]lineType{
+		itemTypeEnd:       lineTypeEnd,
+		tokenTypeIf:       lineTypeIf,
+		tokenTypeElse:     lineTypeElse,
+		tokenTypeEnd:      lineTypeFor,
+		tokenTypeFunction: lineTypeFunction,
+		tokenTypeReturn:   lineTypeReturn,
 	}
 )
 
@@ -51,14 +51,14 @@ func (l *Line) String() string {
 
 // Run evaluates the `NodeStream`
 // produced by the `Lexer`
-func (l *Line) Run() Token {
-	return l.TokenStream().Evaluate()
+func (l *Line) Run() Node {
+	return l.NodeStream().Evaluate()
 }
 
-// TokenStream returns a TokenStream
+// NodeStream returns a NodeStream
 // from the `Lexer`
-func (l *Line) TokenStream() *TokenStream {
-	return NewTokenStreamFromLexer(l.lexer)
+func (l *Line) NodeStream() *NodeStream {
+	return NewNodeStreamFromLexer(l.lexer)
 }
 
 // lineType is a int
@@ -112,7 +112,7 @@ func (lr *LineReader) ReadLines() *LineReader {
 // to the Scope
 func (lr *LineReader) getFunction(line *Line) {
 	depth := 1
-	f := ParseUserFunction(line.TokenStream())
+	f := ParseUserFunction(line.NodeStream())
 	newReader := new(LineReader)
 
 	for line := lr.next(); line.typ != lineTypeEOF; line = lr.next() {
@@ -185,7 +185,7 @@ func (lr *LineReader) next() *Line {
 		line.lexer = NewLexer(lr.strLines[lr.pos])
 		line.lexer.Lex()
 
-		if typ, ok := itemLineKey[line.lexer.FirstItem().typ]; ok {
+		if typ, ok := tokenLineKey[line.lexer.FirstItem().typ]; ok {
 			line.typ = typ
 		} else {
 			line.typ = lineTypeBasic

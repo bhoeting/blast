@@ -32,79 +32,79 @@ type ForDeclaration struct {
 }
 
 // EvaluateRPN evaluates an RPN expression
-func EvaluateRPN(ts *TokenStream) Token {
-	var token Token
-	tokens := NewTokenStream()
+func EvaluateRPN(ts *NodeStream) Node {
+	var node Node
+	nodes := NewNodeStream()
 	for ts.HasNext() {
-		token = ts.Next()
-		switch token.GetType() {
+		node = ts.Next()
+		switch node.GetType() {
 		// Push the value Nodes
-		case tokenTypeNumber, tokenTypeBoolean,
-			tokenTypeVariable, tokenTypeString:
-			tokens.Push(token)
+		case nodeTypeNumber, nodeTypeBoolean,
+			nodeTypeVariable, nodeTypeString:
+			nodes.Push(node)
 		// If an operator is detected, pop two Nodes
 		// off the stack and evaluate them
-		case tokenTypeOperator:
-			t1, t2 := tokens.Pop(), tokens.Pop()
-			tokens.Push(EvaluateTokens(t2, t1, token))
+		case nodeTypeOperator:
+			t1, t2 := nodes.Pop(), nodes.Pop()
+			nodes.Push(EvaluateNodes(t2, t1, node))
 		// If a function call Node is detected, then
 		// pop nodes off the stack to pass to the
 		// function call until argCount is zero
-		case tokenTypeFuncCall:
+		case nodeTypeFuncCall:
 			argCount := ts.Next().(ArgCount)
-			args := NewTokenStream()
+			args := NewNodeStream()
 
 			for argCount > 0 {
-				args.Push(EvaluateToken(tokens.Pop()))
+				args.Push(EvaluateNode(nodes.Pop()))
 				argCount--
 			}
 
 			args.Reverse()
-			t := EvalulateFunctionCall(token, args)
-			tokens.Push(t)
+			t := EvalulateFunctionCall(node, args)
+			nodes.Push(t)
 		}
 	}
 
-	return EvaluateToken(tokens.Pop())
+	return EvaluateNode(nodes.Pop())
 }
 
-// NewTokenStreamInRPN takes a TokenStream and rearranges
-// the tokens so they are in reverse polish notation
-func NewTokenStreamInRPN(ts *TokenStream) *TokenStream {
+// NewnodeStreamInRPN takes a nodeStream and rearranges
+// the nodes so they are in reverse polish notation
+func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 	funcArgCounts := make(map[int]int, 0)
 	currFuncId := -1
-	ops, output := NewTokenStream(), NewTokenStream()
+	ops, output := NewNodeStream(), NewNodeStream()
 
 	for ts.HasNext() {
-		token := ts.Next()
-		switch token.GetType() {
-		case tokenTypeNumber, tokenTypeBoolean,
-			tokenTypeVariable, tokenTypeString:
-			output.Push(token)
-		case tokenTypeFuncCall:
+		node := ts.Next()
+		switch node.GetType() {
+		case nodeTypeNumber, nodeTypeBoolean,
+			nodeTypeVariable, nodeTypeString:
+			output.Push(node)
+		case nodeTypeFuncCall:
 			currFuncId++
 			funcArgCounts[currFuncId] = 1
-			ops.Push(token)
-		case tokenTypeComma:
+			ops.Push(node)
+		case nodeTypeComma:
 			funcArgCounts[currFuncId]++
 			for top := ops.Top(); !isLeftParen(top); top = ops.Top() {
 				output.Push(ops.Pop())
 			}
-		case tokenTypeOperator:
-			for top := ops.Top(); top.GetType() == tokenTypeOperator; top = ops.Top() {
-				if shouldPopOperator(top, token) {
+		case nodeTypeOperator:
+			for top := ops.Top(); top.GetType() == nodeTypeOperator; top = ops.Top() {
+				if shouldPopOperator(top, node) {
 					output.Push(ops.Pop())
 				} else {
 					break
 				}
 			}
 
-			ops.Push(token)
+			ops.Push(node)
 		}
 
-		switch pType := getParenType(token); pType {
+		switch pType := getParenType(node); pType {
 		case parenTypeOpen:
-			ops.Push(token)
+			ops.Push(node)
 			if getParenType(ts.Peek()) == parenTypeClose {
 				funcArgCounts[currFuncId] = 0
 			}
@@ -114,7 +114,7 @@ func NewTokenStreamInRPN(ts *TokenStream) *TokenStream {
 			}
 
 			ops.Pop()
-			if ops.Top().GetType() == tokenTypeFuncCall {
+			if ops.Top().GetType() == nodeTypeFuncCall {
 				output.Push(ops.Pop())
 				output.Push(NewArgCount(funcArgCounts[currFuncId]))
 				currFuncId--
@@ -129,29 +129,29 @@ func NewTokenStreamInRPN(ts *TokenStream) *TokenStream {
 	return output
 }
 
-// EvaluateTokens performs an operation of two Nodes
-func EvaluateTokens(t1 Token, t2 Token, tokOp Token) Token {
+// Evaluatenodes performs an operation of two Nodes
+func EvaluateNodes(t1 Node, t2 Node, tokOp Node) Node {
 	opType := tokOp.(*Operator).typ
 
 	if opType != opTypeAssignment {
-		t1 = EvaluateToken(t1)
+		t1 = EvaluateNode(t1)
 	}
 
-	t2 = EvaluateToken(t2)
+	t2 = EvaluateNode(t2)
 
 	switch opType {
 	case opTypeAddition:
-		return AddTokens(t1, t2)
+		return AddNodes(t1, t2)
 	case opTypeSubtraction:
-		return SubtractTokens(t1, t2)
+		return SubtractNodes(t1, t2)
 	case opTypeMultiplication:
-		return MultiplyTokens(t1, t2)
+		return MultiplyNodes(t1, t2)
 	case opTypeDivision:
-		return MultiplyTokens(t1, t2)
+		return MultiplyNodes(t1, t2)
 	case opTypeExponent:
-		return RaiseTokens(t1, t2)
+		return RaiseNodes(t1, t2)
 	case opTypeAssignment:
-		return AssignTokens(t1, t2)
+		return AssignNode(t1, t2)
 	case opTypeGreaterThan,
 		opTypeLessThan,
 		opTypeLessThanOrEqualTo,
@@ -160,17 +160,17 @@ func EvaluateTokens(t1 Token, t2 Token, tokOp Token) Token {
 		opTypeEqualTo,
 		opTypeAnd,
 		opTypeOr:
-		return CompareTokens(t1, t2, tokOp)
+		return CompareNodes(t1, t2, tokOp)
 	}
 
 	log.Fatalf("Could not %v on %v and %v", tokOp, t1, t2)
-	return &tokenNil{}
+	return &nodeNil{}
 }
 
-// EvaluateToken returns the value of a variable Node
+// Evaluatenode returns the value of a variable Node
 // or the Node if it's not a variable
-func EvaluateToken(t1 Token) Token {
-	if t1.GetType() == tokenTypeVariable {
+func EvaluateNode(t1 Node) Node {
+	if t1.GetType() == nodeTypeVariable {
 		if v, err := GetVar(t1.(*Variable).name); err == nil {
 			return v
 		} else {
@@ -182,7 +182,7 @@ func EvaluateToken(t1 Token) Token {
 
 // EvaluateFunctionCall runs the function stored in a function node
 // and returns the result
-func EvalulateFunctionCall(funcCall Token, args *TokenStream) Token {
+func EvalulateFunctionCall(funcCall Node, args *NodeStream) Node {
 	f, err := GetFunc(funcCall.(*FunctionCall).name)
 
 	if err != nil {
@@ -193,22 +193,22 @@ func EvalulateFunctionCall(funcCall Token, args *TokenStream) Token {
 }
 
 // PasrseForDeclaration parses a NodeStream into a `ForDeclaration`
-func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
+func ParseForDeclaration(ts *NodeStream) *ForDeclaration {
 	// for 1 -> 20, counter, 2
 	fd := new(ForDeclaration)
 
 	// Skip the "for"
 	ts.Next()
 
-	fd.start = NumberFromToken(ts.Next())
+	fd.start = Float64FromNode(ts.Next())
 	arrowOp := ts.Next()
 
-	if arrowOp.GetType() != tokenTypeOperator ||
+	if arrowOp.GetType() != nodeTypeOperator ||
 		arrowOp.(*Operator).typ != opTypeArrow {
 		log.Fatal("Expected -> in for loop declaration")
 	}
 
-	fd.end = NumberFromToken(ts.Next())
+	fd.end = Float64FromNode(ts.Next())
 
 	// Skip comma
 	ts.Next()
@@ -216,11 +216,11 @@ func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 	// Get counter
 	if ts.HasNext() {
 		next := ts.Next()
-		if next.GetType() == tokenTypeNumber {
-			fd.step = NumberFromToken(next)
+		if next.GetType() == nodeTypeNumber {
+			fd.step = Float64FromNode(next)
 		}
 
-		if next.GetType() == tokenTypeVariable {
+		if next.GetType() == nodeTypeVariable {
 			fd.counter = next.(*Variable)
 		}
 	}
@@ -230,7 +230,7 @@ func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 
 	if ts.HasNext() {
 		next := ts.Next()
-		if next.GetType() == tokenTypeVariable {
+		if next.GetType() == nodeTypeVariable {
 			if scopeIsInitalized {
 				v, err := GetVar(next.(*Variable).name)
 				if err != nil {
@@ -239,7 +239,7 @@ func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 			}
 		}
 
-		if next.GetType() == tokenTypeNumber {
+		if next.GetType() == nodeTypeNumber {
 			fd.step = next.(*Number).value
 		}
 	}
@@ -249,8 +249,8 @@ func ParseForDeclaration(ts *TokenStream) *ForDeclaration {
 
 // isLeftParen determines the node
 // is a left paren
-func isLeftParen(token Token) bool {
-	if paren, ok := token.(*Paren); ok {
+func isLeftParen(node Node) bool {
+	if paren, ok := node.(*Paren); ok {
 		return paren.typ == parenTypeOpen
 	}
 
@@ -258,8 +258,8 @@ func isLeftParen(token Token) bool {
 }
 
 // getParenType gets the paren type of a node
-func getParenType(token Token) parenType {
-	if paren, ok := token.(*Paren); ok {
+func getParenType(node Node) parenType {
+	if paren, ok := node.(*Paren); ok {
 		return paren.typ
 	}
 
@@ -270,16 +270,16 @@ func getParenType(token Token) parenType {
 // It is used when an operator is read and determines
 // if it should be popped based on the operator at the
 // top of the stack
-func shouldPopOperator(topToken Token, opToken Token) bool {
+func shouldPopOperator(topNode Node, opNode Node) bool {
 	var ok bool
 	var topOp, op *Operator
 
-	if topOp, ok = topToken.(*Operator); !ok {
-		log.Fatal("topToken is not an operator")
+	if topOp, ok = topNode.(*Operator); !ok {
+		log.Fatal("topNode is not an operator")
 	}
 
-	if op, ok = opToken.(*Operator); !ok {
-		log.Fatal("topToken is not an operator")
+	if op, ok = opNode.(*Operator); !ok {
+		log.Fatal("topNode is not an operator")
 	}
 
 	if op.typ == opTypeExponent {
