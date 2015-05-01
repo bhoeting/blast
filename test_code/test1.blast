@@ -45,8 +45,6 @@ function fizzbuzzWithLoop()
 
 		println()
 	end
-
-	return 0
 end
 
-fizzbuzzWithLoop()
+fizzbuzz(1)
