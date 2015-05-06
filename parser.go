@@ -68,11 +68,11 @@ func EvaluateRPN(ts *NodeStream) Node {
 	return EvaluateNode(nodes.Pop())
 }
 
-// NewnodeStreamInRPN takes a nodeStream and rearranges
+// NewNodeStreamInRPN takes a nodeStream and rearranges
 // the nodes so they are in reverse polish notation
 func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 	funcArgCounts := make(map[int]int, 0)
-	currFuncId := -1
+	currFuncID := -1
 	ops, output := NewNodeStream(), NewNodeStream()
 
 	for ts.HasNext() {
@@ -82,11 +82,11 @@ func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 			nodeTypeVariable, nodeTypeString:
 			output.Push(node)
 		case nodeTypeFuncCall:
-			currFuncId++
-			funcArgCounts[currFuncId] = 1
+			currFuncID++
+			funcArgCounts[currFuncID] = 1
 			ops.Push(node)
 		case nodeTypeComma:
-			funcArgCounts[currFuncId]++
+			funcArgCounts[currFuncID]++
 			for top := ops.Top(); !isLeftParen(top); top = ops.Top() {
 				output.Push(ops.Pop())
 			}
@@ -106,7 +106,7 @@ func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 		case parenTypeOpen:
 			ops.Push(node)
 			if getParenType(ts.Peek()) == parenTypeClose {
-				funcArgCounts[currFuncId] = 0
+				funcArgCounts[currFuncID] = 0
 			}
 		case parenTypeClose:
 			for top := ops.Top(); !isLeftParen(top); top = ops.Top() {
@@ -116,8 +116,8 @@ func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 			ops.Pop()
 			if ops.Top().GetType() == nodeTypeFuncCall {
 				output.Push(ops.Pop())
-				output.Push(NewArgCount(funcArgCounts[currFuncId]))
-				currFuncId--
+				output.Push(NewArgCount(funcArgCounts[currFuncID]))
+				currFuncID--
 			}
 		}
 	}
@@ -129,7 +129,7 @@ func NewNodeStreamInRPN(ts *NodeStream) *NodeStream {
 	return output
 }
 
-// Evaluatenodes performs an operation of two Nodes
+// EvaluateNodes performs an operation of two Nodes
 func EvaluateNodes(t1 Node, t2 Node, tokOp Node) Node {
 	opType := tokOp.(*Operator).typ
 
@@ -167,20 +167,21 @@ func EvaluateNodes(t1 Node, t2 Node, tokOp Node) Node {
 	return &nodeNil{}
 }
 
-// Evaluatenode returns the value of a variable Node
+// EvaluateNode returns the value of a variable Node
 // or the Node if it's not a variable
 func EvaluateNode(t1 Node) Node {
 	if t1.GetType() == nodeTypeVariable {
-		if v, err := GetVar(t1.(*Variable).name); err == nil {
+		var v Node
+		var err error
+		if v, err = GetVar(t1.(*Variable).name); err == nil {
 			return v
-		} else {
-			log.Fatal(err.Error())
 		}
+		log.Fatal(err.Error())
 	}
 	return t1
 }
 
-// EvaluateFunctionCall runs the function stored in a function node
+// EvalulateFunctionCall runs the function stored in a function node
 // and returns the result
 func EvalulateFunctionCall(funcCall Node, args *NodeStream) Node {
 	f, err := GetFunc(funcCall.(*FunctionCall).name)
@@ -192,7 +193,7 @@ func EvalulateFunctionCall(funcCall Node, args *NodeStream) Node {
 	return f.Call(args)
 }
 
-// PasrseForDeclaration parses a NodeStream into a `ForDeclaration`
+// ParseForDeclaration parses a NodeStream into a `ForDeclaration`
 func ParseForDeclaration(ts *NodeStream) *ForDeclaration {
 	// for 1 -> 20, counter, 2
 	fd := new(ForDeclaration)
@@ -284,9 +285,7 @@ func shouldPopOperator(topNode Node, opNode Node) bool {
 
 	if op.typ == opTypeExponent {
 		return opPrecedenceMap[op.typ] < opPrecedenceMap[topOp.typ]
-	} else {
-		return opPrecedenceMap[op.typ] <= opPrecedenceMap[topOp.typ]
 	}
 
-	return false
+	return opPrecedenceMap[op.typ] <= opPrecedenceMap[topOp.typ]
 }
