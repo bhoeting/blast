@@ -54,3 +54,19 @@ function fizzbuzzWithLoop()
 	return 0
 end
 ```
+
+### Fibonacci with recursion
+```lua
+-- get the fifth fib number
+println("Fibonacci with recursion =>", fib(5))
+
+-- Return the fibonacci number at the 
+-- specified index
+function fib(index = 5, acc = 1, prev = 0)
+	if index == 1 
+		return acc
+	end
+
+	return fib(index - 1, acc + prev, acc)
+end	
+```
