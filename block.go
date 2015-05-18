@@ -124,7 +124,7 @@ func (bb *BlockBuilder) Build() *Block {
 			bb.block = bb.block.parent
 		case lineTypeBasic, lineTypeReturn:
 			bb.block.blocks.Add(NewBlock(bb.block, line))
-		case lineTypeIf, lineTypeFunction, lineTypeFor:
+		case lineTypeIf, lineTypeFor:
 			bb.depth++
 			newBlock := NewBlock(bb.block, line)
 			bb.block.blocks.Add(newBlock)
