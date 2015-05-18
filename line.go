@@ -140,8 +140,6 @@ func (lr *LineReader) getFunction(line *Line) {
 	if scopeIsInitalized {
 		SetFunc(f.name, f)
 	}
-
-	println(len(f.block.blocks))
 }
 
 // NextLine returns the next `Line` from
