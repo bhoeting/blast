@@ -31,6 +31,14 @@ type ForDeclaration struct {
 	counter *Variable
 }
 
+// OneLineIf stores the components
+// for a one line if test
+type OneLineIf struct {
+	cond      *NodeStream
+	passBlock *NodeStream
+	elseBlock *NodeStream
+}
+
 // EvaluateRPN evaluates an RPN expression
 func EvaluateRPN(ts *NodeStream) Node {
 	var node Node
@@ -147,7 +155,7 @@ func EvaluateNodes(t1 Node, t2 Node, tokOp Node) Node {
 	case opTypeMultiplication:
 		return MultiplyNodes(t1, t2)
 	case opTypeDivision:
-		return MultiplyNodes(t1, t2)
+		return DivideNodes(t1, t2)
 	case opTypeExponent:
 		return RaiseNodes(t1, t2)
 	case opTypeAssignment:
@@ -193,9 +201,30 @@ func EvalulateFunctionCall(funcCall Node, args *NodeStream) Node {
 	return f.Call(args)
 }
 
+// ParseOneLineIf parses a NodeStream into a `OneLineIf` struct
+func ParseOneLineIf(ns *NodeStream) *OneLineIf {
+	// if x == 1 then print(x) else print(x-1)
+	// if x == 2 then print(x+2)
+	oli := new(OneLineIf)
+
+	// Skip and remove the `if`
+	ns.Next()
+	ns = ns.Chop()
+
+	// Extract the condition
+	reserved := ns.Next()
+	for ns.HasNext() && reserved.(*Reserved).value != "then" {
+		reserved = ns.Next()
+	}
+
+	ns.Next()
+	return oli
+}
+
 // ParseForDeclaration parses a NodeStream into a `ForDeclaration`
 func ParseForDeclaration(ts *NodeStream) *ForDeclaration {
 	// for 1 -> 20, counter, 2
+	// for 1 -> 20, counter
 	fd := new(ForDeclaration)
 
 	// Skip the "for"
