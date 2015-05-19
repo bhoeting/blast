@@ -193,9 +193,3 @@ func builtinPrintln(args *NodeStream) interface{} {
 	fmt.Println(str)
 	return nil
 }
-
-// builtinModulus performs the modulus operation on two Nodes.
-// TODO: make this an operator
-func builtinModulus(args *NodeStream) interface{} {
-	return float64(int(Float64FromNode(args.Next())) % int(Float64FromNode(args.Next())))
-}
