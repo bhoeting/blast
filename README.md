@@ -9,8 +9,8 @@ function fizzbuzz(number)
 		return 0
 	end
 
-	fizz = modulus(number, 3) == 0
-	buzz = modulus(number, 5) == 0
+	fizz = number % 3 == 0
+	buzz = number % 5 == 0
 
 	if fizz
 		print("Fizz")
@@ -33,8 +33,8 @@ end
 ```lua
 function fizzbuzzWithLoop()
 	for 1 -> 200, number
-		fizz = modulus(number, 3) == 0
-		buzz = modulus(number, 5) == 0
+		fizz = number % 3 == 0
+		buzz = number % 5 == 0
 
 		if fizz
 			print("Fizz")

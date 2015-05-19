@@ -59,6 +59,7 @@ const (
 	opTypeAnd
 	opTypeOr
 	opTypeArrow
+	opTypeModulus
 )
 
 // operatorKey is used to get an
@@ -79,6 +80,7 @@ var operatorKey = map[string]opType{
 	"&&": opTypeAnd,
 	"||": opTypeOr,
 	"->": opTypeArrow,
+	"%":  opTypeModulus,
 }
 
 // operatorStrings is used to get a
@@ -100,6 +102,7 @@ var operatorStrings = map[opType]string{
 	opTypeAnd:                  "&&",
 	opTypeOr:                   "||",
 	opTypeArrow:                "->",
+	opTypeModulus:              "%",
 }
 
 // GetType returns nodeTypeOperator

@@ -158,6 +158,8 @@ func EvaluateNodes(t1 Node, t2 Node, tokOp Node) Node {
 		return DivideNodes(t1, t2)
 	case opTypeExponent:
 		return RaiseNodes(t1, t2)
+	case opTypeModulus:
+		return ModNodes(t1, t2)
 	case opTypeAssignment:
 		return AssignNode(t1, t2)
 	case opTypeGreaterThan,

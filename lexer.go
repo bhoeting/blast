@@ -459,7 +459,7 @@ func parseItemTypeFromString(text string) itemType {
 // of operator chars is a valid operator
 func isOperator(strOp string) bool {
 	switch strOp {
-	case "+", "-", "*", "/", "=", "==", "&&", "||", "^", "<", "<=", ">", ">=", "!=", "->":
+	case "+", "-", "*", "/", "=", "==", "&&", "||", "^", "<", "<=", ">", ">=", "!=", "->", "%":
 		return true
 	}
 
@@ -470,7 +470,7 @@ func isOperator(strOp string) bool {
 // is a valid piece or an operator
 func isOperatorPiece(r rune) bool {
 	switch r {
-	case '+', '-', '/', '*', '=', '&', '|', '^', '<', '>', '!':
+	case '+', '-', '/', '*', '=', '&', '|', '^', '<', '>', '%':
 		return true
 	}
 

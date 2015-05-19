@@ -162,7 +162,6 @@ func NewBuiltinFunc(f goFunc) *BuiltinFunction {
 func LoadBuiltinFunctions() {
 	SetFunc("print", NewBuiltinFunc(builtinPrint))
 	SetFunc("println", NewBuiltinFunc(builtinPrintln))
-	SetFunc("modulus", NewBuiltinFunc(builtinModulus))
 }
 
 // builtinPrint prinns the Nodes

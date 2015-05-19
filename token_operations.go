@@ -87,6 +87,16 @@ func DivideNodes(n1 Node, n2 Node) Node {
 	return &nodeNil{}
 }
 
+// ModeNodes takes the modulus and returns
+// the result in a node
+func ModNodes(n1 Node, n2 Node) Node {
+	if n1.GetType() != nodeTypeNumber || n2.GetType() != nodeTypeNumber {
+		log.Fatalf("Cannot perform modulus operation with non-numbers")
+	}
+
+	return NewNumberFromFloat(float64(int(Float64FromNode(n1)) % int(Float64FromNode(n2))))
+}
+
 // CompareNodes compares two Nodes opNode and returns a
 // Boolean Node
 func CompareNodes(n1 Node, n2 Node, tokOp Node) Node {
