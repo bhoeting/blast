@@ -9,6 +9,7 @@ var opPrecedenceMap = map[opType]int{
 	opTypeSubtraction:          2,
 	opTypeMultiplication:       3,
 	opTypeDivision:             3,
+	opTypeModulus:              3,
 	opTypeExponent:             4,
 	opTypeLessThan:             1,
 	opTypeLessThanOrEqualTo:    1,
