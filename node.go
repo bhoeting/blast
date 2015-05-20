@@ -421,6 +421,17 @@ func NewReserved() *Reserved {
 // from a Node
 func Float64FromNode(node Node) float64 {
 	switch node.GetType() {
+	case nodeTypeVariable:
+		if scopeIsInitalized {
+			v, err := GetVar(node.(*Variable).name)
+			if err == nil {
+				return v.(*Number).value
+			} else {
+				log.Fatalf(err.Error())
+			}
+		} else {
+			log.Fatal("Cannot use variable (scope not init")
+		}
 	case nodeTypeNumber:
 		return node.(*Number).value
 	case nodeTypeBoolean:
