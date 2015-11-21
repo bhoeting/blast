@@ -1,7 +1,69 @@
 # Blast
 A programming language implemented in Go.
 
-## Examples
+## How to use it
+This project isn't packaged very well because it's not intended to be used for anything other than learning purposes.  The next steps will show you how to get the code to mess around with.
+
+This You must have Go installed.  I recommend using [gvm](https://github.com/moovweb/gvm) for this.  Then,
+	
+	cd $GOPATH
+	go get github.com/bhoeting/blast
+	cd src/github.com/bhoeting/blast
+	go get
+	go install
+	
+Cool, now it's installed.  Now you should it.  Copy one of the example programs below into `program.blast`, then run `blast program.blast`.  If it worked, cool.  If not, this project is learning purposes, which means it's your duty to fix it.
+	
+
+## How it works
+The general flow of execution in a blast program:
+* Lexer scans each character and builds `Nodes`.  The types of nodes are
+    * `nodeTypeUnkown`
+        * There shouldn't be any of these.
+    * `nodeTypeFuncCall`
+        * `fizzbuzz`
+    * `nodeTypeVariable`
+        * `x`
+    * `nodeTypeNumber`
+        * `13`
+    * `nodeTypeString`
+        * `"hi"` 
+    * `nodeTypeParen`
+        * `)`
+    * `nodeTypeBoolean`
+        * `false`
+        * `true`
+    * `nodeTypeOperator`
+        *`+`
+	*`-`
+	*`*`
+	*`/`
+	*`^`
+	*`=`
+	*`==`
+	*`!=`
+	*`<`
+	*`<=`
+	*`>`
+	*`>=`
+	*`&&`
+	*`||`
+	*`->`
+	*`%`
+    * `nodeTypeComma`
+    *   *','
+    * `nodeTypeArgCount` (this will be explained later)
+    *   *'1'
+    * `nodeTypeReserved`
+        * `for`
+        * `end`
+        * `function`
+        * `return`
+        * `else`
+        * `if`
+
+
+## Example code
 ### Recursive FizzBuzz
 ```lua
 function fizzbuzz(number)
