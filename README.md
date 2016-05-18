@@ -16,7 +16,6 @@ Cool, now it's installed.  Now you should it.  Copy one of the example programs 
 	
 
 ## How it works
-The general flow of execution in a blast program:
 * Lexer scans each character and builds `Nodes`.  The types of nodes are
     * `nodeTypeUnkown`
         * There shouldn't be any of these.
@@ -34,26 +33,26 @@ The general flow of execution in a blast program:
         * `false`
         * `true`
     * `nodeTypeOperator`
-        *`+`
-	*`-`
-	*`*`
-	*`/`
-	*`^`
-	*`=`
-	*`==`
-	*`!=`
-	*`<`
-	*`<=`
-	*`>`
-	*`>=`
-	*`&&`
-	*`||`
-	*`->`
-	*`%`
+    	* `+`
+    	* `-`
+    	* `*`
+    	* `/`
+    	* `^`
+    	* `=`
+    	* `==`
+    	* `!=`
+    	* `<`
+    	* `<=`
+    	* `>`
+    	* `>=`
+    	* `&&`
+    	* `||`
+    	* `->`
+    	* `%`
     * `nodeTypeComma`
-    *   *','
-    * `nodeTypeArgCount` (this will be explained later)
-    *   *'1'
+    	* `,`
+    * `nodeTypeArgCount`
+    	*  this is implicitly parsed and used for evaluating function calls
     * `nodeTypeReserved`
         * `for`
         * `end`
@@ -61,6 +60,8 @@ The general flow of execution in a blast program:
         * `return`
         * `else`
         * `if`
+* The parser converts list of `Nodes` into reverse polish notation, then evaluates that expression.
+* Each `line` belongs to a `block`, and each `block` belongs to another `block`.  Each `block` has its own `scope`.
 
 
 ## Example code
