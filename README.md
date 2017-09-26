@@ -68,27 +68,27 @@ Cool, now it's installed.  Now you should use it.  Copy one of the example progr
 ### Recursive FizzBuzz
 ```lua
 function fizzbuzz(number)
-	if number > 100
-		return 0
-	end
+  if number > 100
+    return 0
+  end
 
-	fizz = number % 3 == 0
-	buzz = number % 5 == 0
+  fizz = number % 3 == 0
+  buzz = number % 5 == 0
 
-	if fizz
-		print("Fizz")
-	end
+  if fizz
+    print("Fizz")
+  end
 
-	if buzz
-		print("Buzz")
-	end
+  if buzz
+    print("Buzz")
+  end
 
-	if fizz == false && buzz == false
-		print(number)
-	end
+  if fizz == false && buzz == false
+    print(number)
+  end
 
-	println()
-	return fizzbuzz(number + 1)
+  println()
+  return fizzbuzz(number + 1)
 end
 ```
 
