@@ -95,26 +95,26 @@ end
 ### FizzBuzz with for loop
 ```lua
 function fizzbuzzWithLoop()
-	for 1 -> 200, number
-		fizz = number % 3 == 0
-		buzz = number % 5 == 0
+  for 1 -> 200, number
+    fizz = number % 3 == 0
+    buzz = number % 5 == 0
 
-		if fizz
-			print("Fizz")
-		end
+    if fizz
+      print("Fizz")
+    end
 
-		if buzz
-			print("Buzz")
-		end
+    if buzz
+      print("Buzz")
+    end
 
-		if fizz == false && buzz == false
-			print(number)
-		end
+    if fizz == false && buzz == false
+      print(number)
+    end
 
-		println()
-	end
+    println()
+  end
 
-	return 0
+  return 0
 end
 ```
 
@@ -126,10 +126,10 @@ println("Fibonacci with recursion =>", fib(5))
 -- Return the fibonacci number at the 
 -- specified index
 function fib(index = 5, acc = 1, prev = 0)
-	if index == 1 
-		return acc
-	end
+  if index == 1 
+    return acc
+  end
 
-	return fib(index - 1, acc + prev, acc)
+  return fib(index - 1, acc + prev, acc)
 end	
 ```
