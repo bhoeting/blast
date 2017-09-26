@@ -12,7 +12,7 @@ This You must have Go installed.  I recommend using [gvm](https://github.com/moo
 	go get
 	go install
 	
-Cool, now it's installed.  Now you should it.  Copy one of the example programs below into `program.blast`, then run `blast program.blast`.  If it worked, cool.  If not, this project is learning purposes, which means it's your duty to fix it.
+Cool, now it's installed.  Now you should use it.  Copy one of the example programs below into `program.blast`, then run `blast program.blast`.  If it worked, cool.  If not, this project is learning purposes, which means it's your duty to fix it.
 	
 
 ## How it works
